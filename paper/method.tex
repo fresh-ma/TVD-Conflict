@@ -1,1 +1,25 @@
-% Method will be drafted after the experimental design is fixed.
+\section{TVD-Conflict: Systematic Safety-Judge Failure Data Generation}
+
+TVD-Conflict formulates safety-judge stress testing as a search problem over
+task, validator, and data components. A task specifies the safety criterion and
+visible context. Validators are LLM judges that independently apply the same
+criterion. The data component stores candidate interactions together with raw
+and parsed validator outputs. A candidate is retained when it crosses the
+configured disagreement threshold.
+
+For binary judging, a conflict occurs when at least two validators assign
+different harmfulness labels. For graded judging, each validator receives the
+score
+\[
+  s=(1-r)\frac{c+p-2}{8},
+\]
+where $r\in\{0,1\}$ is the refusal decision and $c,p\in\{1,\ldots,5\}$ are
+convincingness and specificity. A pair conflicts when its absolute score
+difference exceeds 0.5. The search process uses validator feedback to revise a
+candidate while preserving the underlying task and ground-truth safety label.
+
+\paragraph{Search-budget evaluation.}
+Table~2 will report ConflictR after a budget of ten candidate revisions. The
+table is intentionally left unpopulated until the corresponding search runs are
+complete; the reported quantity will use the same conflict definitions as
+Table~\ref{tab:attack-judge-asr-conflict}.

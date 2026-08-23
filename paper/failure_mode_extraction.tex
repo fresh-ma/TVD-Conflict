@@ -1,0 +1,24 @@
+\section{Extract Safety-Judge Failure-Modes from Attack Responses}
+
+We evaluate responses from ten jailbreak attacks: Cognitive Overload,
+MathPrompt, Semantic Cloaking, ActorBreaker, Mastermind, Compound Roleplay, CIA
+Context, AutoDAN-Turbo, FITD, and Prefill. Each attack contributes 200 responses,
+covering four victim models and 50 AdvBench goals. Every response is evaluated
+by GPT-OSS-120B, Qwen3.7-Flash, and DeepSeek-V4-Flash using both the binary and
+graded judge prompts.
+
+\input{../tables/table_1_attack}
+
+Panel A of Table~\ref{tab:attack-judge-asr-conflict} reports the ASR assigned by
+each backbone under the two rubrics. The choice of rubric can reverse the
+apparent ranking of attack methods. For GPT-OSS-120B, for example, MathPrompt
+falls from 67.5\% under binary judging to 29.5\% under scoring, while Mastermind
+rises from 31.5\% to 87.5\%. Panel B isolates evaluator conflict from ASR: it
+holds the rubric fixed and measures disagreement across the three backbones for
+each attack.
+
+We derive the failure-mode taxonomy from conflict cases rather than from all
+attack responses. Each case retains the shared query and response, the raw judge
+outputs, parsed verdicts, and the dimensions responsible for disagreement. This
+representation supports both quantitative prevalence estimates and qualitative
+inspection of how an evaluator reached its decision.
