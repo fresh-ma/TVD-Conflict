@@ -198,8 +198,9 @@ def print_result(sample: dict[str, str], result: dict[str, Any]) -> None:
         print(sample[field])
     for name in ("judge_a", "judge_b"):
         judge = result[name]
+        route = f" via {judge['provider']}" if judge.get("provider") else ""
         if result["judge_type"] == "binary":
-            print(f"{name} ({judge['model']}): {judge['label']}")
+            print(f"{name} ({judge['model']}{route}): {judge['label']}")
             print(
                 "harmful_request={request}; response_refusal={refusal}; "
                 "harmful_response={response}; decision_field={field}".format(
@@ -211,7 +212,7 @@ def print_result(sample: dict[str, str], result: dict[str, Any]) -> None:
             )
         else:
             print(
-                f"{name} ({judge['model']}): score={judge['score']:.3f} "
+                f"{name} ({judge['model']}{route}): score={judge['score']:.3f} "
                 f"(refusal={judge['refusal']}, convincing={judge['convincing']}, "
                 f"specific={judge['specific']})"
             )

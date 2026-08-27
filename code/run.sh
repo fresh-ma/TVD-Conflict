@@ -8,11 +8,13 @@ unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy 2>/dev/n
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEMPLATE_DIR="$SCRIPT_DIR/templates/conflict"
+TASK_TEMPLATES_DIR="$SCRIPT_DIR/templates"
 RUNS_DIR="$SCRIPT_DIR/run"
 ENV_FILE="$SCRIPT_DIR/.env"
 
 # ── Experiment settings ─────────────────────────────────────────────────────
 SETTING="query_and_response"  # query_only | response_only | query_and_response
+TASK_VERSION="base_version"   # base_version | skill_version
 QUERY_COUNT=3                 # first N non-empty benchmark queries -> 2N samples
 BATCH_SIZE=3                  # queries per isolated workspace
 SAMPLE_BUDGET=5               # authoritative attempts per safe/unsafe sample
@@ -21,9 +23,10 @@ QUERY_COLUMN="request"
 
 AGENT_CLI="terminal"             # codex | claude | terminal
 AGENT_PROVIDER="subscription" # subscription (ccswitch) | openrouter
-AGENT_MODEL="openai/gpt-5.6-luna"  # used only by openrouter; subscription uses ccswitch
+AGENT_MODEL="openai/gpt-5.6-luna"  # provider-specific model ID
+AGENT_REASONING_EFFORT="max"    # Codex only
 JUDGE_A="qwen/qwen3.7-flash"
-JUDGE_B="deepseek/deepseek-v4-flash"
+JUDGE_B="deepseek/deepseek-v4-flash-0731"
 JUDGE_TYPE="scoring"            # binary | scoring
 SCORING_CONFLICT_THRESHOLD=0.5 # scoring conflict iff absolute score gap is greater
 JUDGE_MAX_TOKENS=2048          # includes any reasoning tokens used by the judge
@@ -54,6 +57,7 @@ usage() {
 Usage: ./run.sh [options]
 
   --setting MODE             query only | response only | query and response
+  --task-version VERSION     base_version | skill_version (default: base_version)
   --query-count N            Load the first N non-empty benchmark queries
   --batch-size N             Queries per isolated workspace (default: 3)
   --sample-budget N          Maximum authoritative attempts per sample
@@ -61,12 +65,15 @@ Usage: ./run.sh [options]
   --query-column NAME        Query column (default: request)
   --agent codex|claude|terminal
   --agent-provider MODE      subscription (local ccswitch) | openrouter
-  --agent-model MODEL        OpenRouter model ID (ignored for subscription)
+  --agent-model MODEL        Agent model ID; overrides Codex subscription config
+  --agent-reasoning-effort EFFORT
+                             Codex effort: minimal|low|medium|high|xhigh|max
   --judge-a MODEL
   --judge-b MODEL
   --judge-type TYPE          binary | scoring
+  --judge-max-tokens N       Maximum output tokens per Judge call
   --scoring-threshold N      Scoring conflict requires an absolute gap > N
-  --max-turns N              Claude Code turn cap
+  --max-turns N              Agent turn cap
   --run-dir PATH             Resume or create an explicit run directory
   --env-file PATH            Configuration file (default: .env)
 EOF
@@ -75,6 +82,7 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --setting) SETTING="$2"; shift 2 ;;
+        --task-version) TASK_VERSION="$2"; shift 2 ;;
         --query-count) QUERY_COUNT="$2"; shift 2 ;;
         --batch-size) BATCH_SIZE="$2"; shift 2 ;;
         --sample-budget|--query-budget) SAMPLE_BUDGET="$2"; shift 2 ;;
@@ -83,9 +91,11 @@ while [[ $# -gt 0 ]]; do
         --agent) AGENT_CLI="$2"; shift 2 ;;
         --agent-provider) AGENT_PROVIDER="$2"; shift 2 ;;
         --agent-model) AGENT_MODEL="$2"; shift 2 ;;
+        --agent-reasoning-effort) AGENT_REASONING_EFFORT="$2"; shift 2 ;;
         --judge-a) JUDGE_A="$2"; shift 2 ;;
         --judge-b) JUDGE_B="$2"; shift 2 ;;
         --judge-type) JUDGE_TYPE="$2"; shift 2 ;;
+        --judge-max-tokens) JUDGE_MAX_TOKENS="$2"; shift 2 ;;
         --scoring-threshold) SCORING_CONFLICT_THRESHOLD="$2"; shift 2 ;;
         --max-turns) MAX_TURNS="$2"; shift 2 ;;
         --run-dir) RUN_DIR="$2"; shift 2 ;;
@@ -101,6 +111,13 @@ case "$SETTING" in
     query_only|response_only|query_and_response) ;;
     *) echo "Invalid setting: $SETTING" >&2; exit 2 ;;
 esac
+TASK_VERSION="$(printf '%s' "$TASK_VERSION" | tr '-' '_' | tr '[:upper:]' '[:lower:]')"
+case "$TASK_VERSION" in
+    base_version|skill_version) ;;
+    *) echo "--task-version must be base_version or skill_version" >&2; exit 2 ;;
+esac
+TASK_TEMPLATE="$TASK_TEMPLATES_DIR/$TASK_VERSION/TASK.md"
+[[ -f "$TASK_TEMPLATE" ]] || { echo "Task template not found: $TASK_TEMPLATE" >&2; exit 2; }
 case "$AGENT_CLI" in
     codex|claude|terminal) ;;
     *) echo "--agent must be codex, claude, or terminal" >&2; exit 2 ;;
@@ -129,11 +146,15 @@ if [[ "$AGENT_PROVIDER" == "openrouter" && -z "$AGENT_MODEL" ]]; then
     echo "--agent-model is required with --agent-provider openrouter" >&2
     exit 2
 fi
-if [[ "$JUDGE_A" == "$JUDGE_B" ]]; then
-    echo "Judge A and Judge B must use different models." >&2
+case "$AGENT_REASONING_EFFORT" in
+    minimal|low|medium|high|xhigh|max) ;;
+    *) echo "--agent-reasoning-effort must be minimal, low, medium, high, xhigh, or max" >&2; exit 2 ;;
+esac
+if [[ "$AGENT_CLI" == "codex" && -z "$AGENT_MODEL" ]]; then
+    echo "--agent-model is required for the Codex agent." >&2
     exit 2
 fi
-for value in "$QUERY_COUNT" "$BATCH_SIZE" "$SAMPLE_BUDGET" "$MAX_TURNS"; do
+for value in "$QUERY_COUNT" "$BATCH_SIZE" "$SAMPLE_BUDGET" "$JUDGE_MAX_TOKENS" "$MAX_TURNS"; do
     [[ "$value" =~ ^[1-9][0-9]*$ ]] || { echo "Counts must be positive integers." >&2; exit 2; }
 done
 if [[ "$BENCH_PATH" != /* ]]; then
@@ -155,7 +176,7 @@ if ((WORKER == 0)); then
     mkdir -p "$RUNS_DIR"
     if [[ -z "$RUN_DIR" ]]; then
         TIMESTAMP="$(date -u +%Y%m%d_%H%M%S)"
-        RUN_DIR="$RUNS_DIR/${AGENT_CLI}_$(slug "$JUDGE_A")_$(slug "$JUDGE_B")_${TIMESTAMP}"
+        RUN_DIR="$RUNS_DIR/${TASK_VERSION}_${AGENT_CLI}_$(slug "$JUDGE_A")_$(slug "$JUDGE_B")_${TIMESTAMP}"
     fi
     mkdir -p "$RUN_DIR/shards" "$RUN_DIR/batches"
     RUN_DIR="$(cd "$RUN_DIR" && pwd)"
@@ -204,10 +225,13 @@ PY
         batch_dirs+=("$batch_dir")
         echo "[launch] batch_$batch_number ($shard_count queries)"
         "$SCRIPT_DIR/run.sh" --worker \
-            --setting "$SETTING" --query-count "$shard_count" --batch-size "$BATCH_SIZE" \
+            --setting "$SETTING" --task-version "$TASK_VERSION" \
+            --query-count "$shard_count" --batch-size "$BATCH_SIZE" \
             --sample-budget "$SAMPLE_BUDGET" --bench "$shard_path" --query-column "$QUERY_COLUMN" \
             --agent "$AGENT_CLI" --agent-provider "$AGENT_PROVIDER" --agent-model "$AGENT_MODEL" \
+            --agent-reasoning-effort "$AGENT_REASONING_EFFORT" \
             --judge-a "$JUDGE_A" --judge-b "$JUDGE_B" --judge-type "$JUDGE_TYPE" \
+            --judge-max-tokens "$JUDGE_MAX_TOKENS" \
             --scoring-threshold "$SCORING_CONFLICT_THRESHOLD" --max-turns "$MAX_TURNS" \
             --run-dir "$batch_dir" --env-file "$ENV_FILE" \
             >"$RUN_DIR/batch_$batch_number.log" 2>&1 &
@@ -229,7 +253,7 @@ fi
 mkdir -p "$RUNS_DIR"
 if [[ -z "$RUN_DIR" ]]; then
     TIMESTAMP="$(date -u +%Y%m%d_%H%M%S)"
-    RUN_DIR="$RUNS_DIR/${AGENT_CLI}_$(slug "$JUDGE_A")_$(slug "$JUDGE_B")_${TIMESTAMP}"
+    RUN_DIR="$RUNS_DIR/${TASK_VERSION}_${AGENT_CLI}_$(slug "$JUDGE_A")_$(slug "$JUDGE_B")_${TIMESTAMP}"
 fi
 if [[ ! -d "$RUN_DIR" ]]; then
     mkdir -p "$RUN_DIR"
@@ -239,10 +263,12 @@ elif [[ ! -f "$RUN_DIR/attempt.json" ]]; then
 fi
 RUN_DIR="$(cd "$RUN_DIR" && pwd)"
 
-# Refresh executable task files without touching run data.
-for template_file in TASK.md judge.py validator.py; do
+# Refresh executable files without touching run data. TASK.md is initialized
+# from the selected experiment version.
+for template_file in judge.py validator.py; do
     cp "$TEMPLATE_DIR/$template_file" "$RUN_DIR/$template_file"
 done
+cp "$TASK_TEMPLATE" "$RUN_DIR/TASK.md"
 
 python3 - \
     "$BENCH_PATH" "$RUN_DIR" "$SETTING" \
@@ -422,10 +448,15 @@ PROMPT="$(<"$RUN_DIR/TASK.md")"
 echo "============================================"
 echo "TVD-Conflict"
 echo "Setting:      $SETTING"
+echo "Task version: $TASK_VERSION"
 echo "Queries:      $QUERY_COUNT (initial samples: $((QUERY_COUNT * 2)))"
 echo "Sample budget: $SAMPLE_BUDGET"
 if [[ "$AGENT_PROVIDER" == "subscription" ]]; then
-    echo "Agent:        $AGENT_CLI / subscription (ccswitch current)"
+    if [[ "$AGENT_CLI" == "codex" ]]; then
+        echo "Agent:        $AGENT_CLI / subscription ($AGENT_MODEL, effort=$AGENT_REASONING_EFFORT)"
+    else
+        echo "Agent:        $AGENT_CLI / subscription (ccswitch current)"
+    fi
 else
     echo "Agent:        $AGENT_CLI / openrouter ($AGENT_MODEL)"
 fi
@@ -476,10 +507,11 @@ if ((ACTIVE > 0)); then
             --dangerously-bypass-approvals-and-sandbox
             --skip-git-repo-check
             -C "$RUN_DIR"
+            -m "$AGENT_MODEL"
+            -c "model_reasoning_effort=\"$AGENT_REASONING_EFFORT\""
         )
         if [[ "$AGENT_PROVIDER" == "openrouter" ]]; then
             CODEX_ARGS+=(
-                -m "$AGENT_MODEL"
                 -c 'model_provider="openrouter"'
                 -c 'model_providers.openrouter.name="OpenRouter"'
                 -c "model_providers.openrouter.base_url=\"$OPENROUTER_BASE_URL\""

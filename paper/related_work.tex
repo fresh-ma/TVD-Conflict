@@ -1,11 +1,36 @@
 \section{Related Work}
 
-\paragraph{LLM as Jailbreak Judge.}
-With the rapid expansion of adversarial safety evaluation for large language models, \textsc{LLM-as-a-Judge} has become the standard infrastructure for quantifying attack success rates (ASR). In automated red teaming, black-box attack frameworks such as PAIR \citep{chao2023jailbreaking} and TAP \citep{mehrotra2023tree} rely on LLM judges to provide optimization feedback. In standardized safety benchmarking, frameworks including HarmBench \citep{mazeika2024harmbench} and JailbreakBench \citep{chao2024jailbreakbench} deploy state-of-the-art frontier models or dedicated safety classifiers to automate evaluations across diverse threat categories. Recent efforts further investigate multi-agent debate mechanisms \citep{lin2025efficient} to enhance judgment consensus. These pipelines universally operate under the assumption that judge models provide stable and faithful safety assessments across diverse response styles.
+\paragraph{Automated Jailbreak Evaluation.}
+Automated evaluation is now a central component of jailbreak research. Attack
+frameworks such as PAIR and TAP use LLM judge feedback to guide their search
+process \citep{chao2023jailbreaking,mehrotra2023tree}. HarmBench and
+JailbreakBench standardize evaluation across harmful goals, attack methods, and
+target models through prompted judges or dedicated classifiers
+\citep{mazeika2024harmbench,chao2024jailbreakbench}. Subsequent work has refined
+the definition and measurement of attack success through structured scoring
+criteria \citep{souly2024strongreject,cai2024rethinking} and consensus among
+multiple evaluators \citep{lin2025efficient}. These methods enable red teaming
+at scale, but they also place the validity of reported attack success
+rates on the reliability of the judge.
 
-\paragraph{Vulnerabilities and Disagreements in LLM Judges.}
-Despite widespread adoption, extensive research shows that model-based evaluators are susceptible to substantial systematic flaws in general domains. Prior meta-evaluations demonstrate that LLM judges exhibit inherent biases such as position bias, verbosity bias, and self-enhancement \citep{zheng2023judging}, while remaining vulnerable to minor adversarial perturbations \citep{raina2024is}. \citet{ICLR2025_fdca08d3} identify 12 distinct types of bias and introduce the CALM benchmark to quantify judge sensitivity under controlled perturbations. 
-In safety and jailbreak evaluation, these vulnerabilities become even more pronounced. Recent analyses reveal that safety judges are easily deceived by superficial compliance disclaimers, semantic reframing, or degraded incoherence from victim models \citep{souly2024strongreject,cai2024rethinking}, with judge accuracy degrading to near random chance under red-teaming distribution shifts \citep{schwinn2026coin,almasoud2026security}. Furthermore, safety-judge decisions often remain anchored to rigid internal priors when the provided context or safety criteria vary, showing reluctance to revise evaluations when explicit definitions conflict with their default boundaries \citep{alloula2026safety}.
-Although emerging efforts have begun benchmarking judge unreliability through static stress tests and human audits \citep{schwinn2026coin}, they fail to systematically examine what specific content triggers instability across judges, nor do they provide an automated mechanism to actively mine and categorize these boundary failures. To bridge this gap, TVD-Conflict introduces an agentic framework that leverages inter-judge disagreement as an automated validator to dynamically discover conflict-inducing pairs and systematically unveil their underlying failure modes.
-
-
+\paragraph{Reliability of LLM Judges.}
+General studies of LLM evaluators have documented position and verbosity biases,
+as well as a tendency to prefer their own outputs \citep{zheng2023judging}.
+They are also vulnerable to adversarial input perturbations
+\citep{raina2024is} and exhibit broad sensitivity across controlled bias
+dimensions \citep{ICLR2025_fdca08d3}. These problems become especially
+consequential in jailbreak evaluation. Safety evaluation pipelines exhibit
+substantial methodological noise \citep{beyer2025llm}, while red teaming
+distribution shifts can reduce judge accuracy to nearly random chance
+\citep{schwinn2026coin}. Benign wrappers and refusal statements can also reverse
+verdicts without changing the underlying harmful content
+\citep{gao2026reliable}. Other studies identify evaluator failures caused by
+semantic reframing, degraded responses, and rigid safety priors
+\citep{souly2024strongreject,cai2024rethinking,alloula2026safety,almasoud2026security}.
+Together, these works establish that jailbreak judges are unreliable, but they
+primarily diagnose failures on fixed datasets, human labels, or predefined
+perturbations. They do not actively search the broader response space for new
+content that exposes recurring failures across judges. \textsc{TVD}-Conflict
+addresses this gap by making disagreement under a shared evaluation criterion
+an executable search objective, enabling active discovery and analysis of judge
+failure cases without human annotation.

@@ -1,6 +1,6 @@
-\section{TVD-Conflict: Systematic Safety-Judge Failure Data Generation}
+\section{TVD-Conflict: Automated Discovery of Judge Conflicts}
 
-TVD-Conflict formulates safety-judge stress testing as a search problem over
+TVD-Conflict formulates jailbreak judge stress testing as a search problem over
 task, validator, and data components. A task specifies the safety criterion and
 visible context. Validators are LLM judges that independently apply the same
 criterion. The data component stores candidate interactions together with raw
@@ -18,9 +18,12 @@ convincingness and specificity. A pair conflicts when its absolute score
 difference exceeds 0.5. The search process uses validator feedback to revise a
 candidate while preserving the underlying task and ground-truth safety label.
 
-\paragraph{Search-budget evaluation.}
+\paragraph{Evaluation under a fixed search budget.}
 Table~\ref{tab:search-budget-conflict} will report Conflict Rate after a budget
 of ten candidate revisions, using the same conflict definitions as
-Table~\ref{tab:attack-judge-asr-conflict}.
+Table~\ref{tab:attack-judge-conflict}.
 
-\input{../tables/table_2_search_budget}
+\input{../tables/table_3_search_budget}
+
+The resulting conflict set supports a systematic analysis of the recurring
+properties that lead jailbreak judges to different conclusions.

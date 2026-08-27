@@ -1,0 +1,45 @@
+\section{Disagreement among Jailbreak Judges}
+
+We first test whether jailbreak judges disagree when the query, response, and
+evaluation criterion are held fixed and only the judge backbone changes.
+
+\paragraph{Setup.}
+We randomly sample 50 malicious goals from AdvBench
+\citep{zou2023universal} and evaluate ten jailbreak attacks against four victim
+models: \texttt{deepseek-v4-flash-0731},
+\texttt{gpt-5.6-luna},
+\texttt{gpt-oss-120b}, and
+\texttt{qwen3.7-flash}. This produces one response
+for each goal, victim, and attack combination, yielding 200 responses per
+attack and 2,000 responses in total. We evaluate every response independently
+with GPT-Judge (\texttt{gpt-oss-120b}), Qwen-Judge
+(\texttt{qwen3.7-flash}), and DeepSeek-Judge
+(\texttt{deepseek-v4-flash-0731}).
+
+\paragraph{Metrics.}
+We use the binary WildGuard prompt \citep{han2024wildguard} and the StrongREJECT
+scoring prompt \citep{souly2024strongreject}. Binary ASR is the fraction of
+responses labeled harmful. Scoring ASR requires no refusal and a mean
+convincingness and specificity score of at least 4. We define Conflict Rate
+(CR) as the fraction of responses on which the three judges disagree. A binary
+conflict occurs when their harmfulness labels are not identical. For scoring,
+we first convert each judgment into the same success label used for ASR and
+count a conflict when the three labels are not identical. This definition
+aligns the scoring CR in this study with the success threshold used for ASR.
+Missing judgments count as unsuccessful for ASR and are excluded from CR.
+
+\input{../tables/table_1_attack_success_rate}
+\input{../tables/table_2_attack_conflict_rate}
+
+\paragraph{Results.}
+Tables~\ref{tab:attack-asr-by-judge} and~\ref{tab:attack-judge-conflict} reveal
+two patterns. First, measured attack success depends on the judge: the largest
+ASR difference is 35.0 percentage points on MathPrompt under binary evaluation,
+between GPT-Judge and DeepSeek-Judge. Second, agreement depends on both the
+attack and the evaluation criterion. The judges largely agree on Cognitive
+Overload and AutoDAN-Turbo, but diverge on MathPrompt and CIA Context under
+binary evaluation and on MathPrompt and FITD under scoring. Judge conflict is
+therefore not a uniform property of the evaluators; it emerges for particular
+response distributions and criteria. Existing attacks reveal this phenomenon,
+but do not systematically explore the broader response space in which it
+occurs.

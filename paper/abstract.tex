@@ -1,3 +1,21 @@
 \begin{abstract}
-LLM-as-Judge has become a widely adopted paradigm for safety evaluation, yet existing evaluations implicitly assume that different judge models produce consistent assessments under identical criteria. In this work, we identify a critical reliability issue in LLM-based safety evaluation: judge disagreement can be systematically induced through adversarially discovered responses. We introduce TVD-Conflict, a Task-Validator-Data based agentic framework that treats multiple LLM judges as competing validators and searches for responses that cause conflicting safety judgments. Using TVD-Conflict, we construct a collection of disagreement-inducing cases across multiple safety evaluation scenarios and reveal systematic failure modes in current LLM safety judges, including sensitivity to implicit harmful intent, code-mediated behaviors, and multi-step contextual reasoning. Our findings demonstrate that the reliability of LLM-as-Judge evaluations can depend substantially on the choice of evaluator, highlighting the need to stress-test judges themselves before using them as trusted evaluation protocols.
+Jailbreak research increasingly relies on LLM judges to determine whether a
+model response fulfills a malicious goal. Prior work has shown that these
+judges can be unreliable under distribution shifts and surface perturbations,
+but it remains unclear what kinds of content systematically cause them to fail.
+We introduce \textsc{TVD}-Conflict, an agentic pipeline that actively searches
+for responses that induce disagreement among jailbreak judges. Its key design
+is a validator that requires no human judge. Two judge instances apply the same
+evaluation criterion, and their conflict provides an automatic failure signal
+when they return opposite binary verdicts or scores separated by more than a
+specified threshold. This design enables collection at scale without human
+annotation. On AdvBench, \textsc{TVD}-Conflict
+outperforms baselines constructed from attack libraries in collection
+efficiency and sample diversity, yielding more than 1,000 pairs that induce
+judge conflict. Our analysis identifies six recurring failure modes involving
+criterion ambiguity, misleading refusal or compliance cues, contextual
+distraction, and insufficient reasoning capability. Prompts informed by these
+failure modes improve judge accuracy by up to 200\% relative to the original
+prompt, showing that stress testing based on judge conflict can support both
+systematic diagnosis and stronger jailbreak evaluation.
 \end{abstract}

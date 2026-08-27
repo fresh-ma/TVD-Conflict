@@ -1,39 +1,97 @@
 \section{Introduction}
 
-Large language models are increasingly used to evaluate whether model responses
-are safe, policy compliant, or harmful. This practice replaces part of the
-human evaluation pipeline with an LLM judge, but it also makes the evaluator's
-own decision boundary part of the measurement instrument. A safety result is
-therefore reliable only when the judge applies the intended criterion
-consistently across response styles, contexts, and model families.
+Large language models (LLMs) have demonstrated remarkable capabilities across
+an expanding range of tasks, yet their deployment remains exposed to
+adversarial threats. Among them, jailbreak attacks aim to bypass safety
+alignment and elicit content that a model should refuse
+\citep{chao2023jailbreaking,mehrotra2023tree}. Although their immediate objective
+is to break model safeguards, jailbreaks also serve a critical defensive role:
+they expose systematic failure modes, support scalable red teaming, and help
+anticipate misuse before deployment
+\citep{mazeika2024harmbench,chao2024jailbreakbench}.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/figure1_hero.png}
-  \caption{Overview of TVD-Conflict. Safety judges can produce incompatible
-  verdicts under shared criteria; TVD-Conflict searches for
-  disagreement-inducing query--response pairs and organizes the resulting cases
-  into recurring evaluator failure modes.}
+  \includegraphics[width=\textwidth]{figures/figure_1.png}
+  \caption{Overview of \textsc{TVD}-Conflict. Jailbreak judges can produce
+  incompatible verdicts under a shared evaluation criterion.
+  \textsc{TVD}-Conflict uses this disagreement as a validation signal to find
+  pairs of queries and responses that induce conflict, organize them into
+  recurring failure modes, and strengthen subsequent judge prompts.}
   \label{fig:tvd-conflict-overview}
 \end{figure*}
 
-We study a basic failure of this assumption: different safety judges can assign
-incompatible verdicts to the same attack response even when they receive the
-same visible input and nominal evaluation criteria. The disagreement is not
-limited to isolated prompts. Across ten jailbreak attacks, the three backbones
-conflict on 24.2\% of complete cases under binary judging and 10.8\% under the
-scoring rubric (Table~\ref{tab:attack-judge-asr-conflict}). The rate is strongly
-attack dependent: Binary CR reaches 43.4\% on MathPrompt, while Scoring CR
-reaches 37.5\% on FITD.
+One critical step in jailbreak research is determining whether an attack has
+actually succeeded. This decision is increasingly delegated to LLM jailbreak
+judges, which assess whether a response fulfills the original
+malicious goal with harmful, specific, and actionable content. These judges
+provide attack success labels, optimization feedback, and benchmark scores in
+automated red teaming pipelines
+\citep{chao2023jailbreaking,mehrotra2023tree,mazeika2024harmbench,chao2024jailbreakbench,souly2024strongreject}.
+Their verdicts therefore directly affect both attack development and the
+reported safety of the models being evaluated.
 
-This observation motivates TVD-Conflict, a framework that treats disagreement
-among safety validators as a searchable signal. Rather than assuming a single
-judge provides ground truth, the framework constructs and retains cases that
-expose divergent evaluator priors. We use these cases to characterize recurring
-failure modes and to build data for stress-testing safety evaluation pipelines.
+Jailbreak judges are themselves a source of evaluation error. Prior work has
+identified substantial noise across safety evaluation pipelines
+\citep{beyer2025llm}, judge accuracy close to random chance under red teaming
+distribution shifts \citep{schwinn2026coin}, and verdict flips caused by benign wrappers or a
+single prepended refusal even when the harmful content remains unchanged
+\citep{gao2026reliable}. These findings show that attack success rates can
+capture evaluator weaknesses rather than genuine safety failures.
 
-Our study makes three contributions. First, we quantify judge- and
-rubric-dependent variation on attack responses from ten jailbreak methods.
-Second, we organize the observed conflicts into six operational failure modes.
-Third, we introduce TVD-Conflict as a systematic procedure for generating
-disagreement-focused safety-judge data under a fixed search budget.
+Together, these studies establish that jailbreak judges can fail, but they do
+not reveal which kinds of content systematically trigger those failures.
+Existing studies primarily diagnose errors on fixed datasets, samples audited
+by humans, or predefined perturbations
+\citep{beyer2025llm,schwinn2026coin,gao2026reliable}. Such protocols verify known
+forms of unreliability but do not actively explore the broader response space
+for previously unseen failure cases. This leaves a fundamental question:
+\emph{What kinds of content make jailbreak judges unstable?}
+
+To answer this question, we introduce \textsc{TVD}-Conflict, an agentic pipeline
+that actively searches for responses that induce disagreement among jailbreak
+judges. Recent work has shown that the Task--Validator--Data (TVD) framework is
+an effective instrument for studying safety collapse in frontier LLMs and
+characterizing their harmful output profiles
+\citep{wu2026internal,ma2026harmprofile}. Building on this framework, we redesign
+its task, validator, and data components around failures in jailbreak judges. The
+task directs an agent to construct pairs of queries and responses that challenge the
+judges, while the data component records each candidate and its judge outputs.
+
+A key design of \textsc{TVD}-Conflict is a validator that requires no human
+judge. Rather than asking human annotators whether a generated case exposes a
+judge failure, we use conflict between judges as an automatic validation
+signal. For each candidate, two judge instances apply an identical evaluation
+criterion. The instances may use the same or different backbones. The validator accepts the
+candidate when the judges return opposite binary decisions or when their scores
+differ by more than a specified threshold. Because every candidate can be
+validated automatically, the agent can iteratively search for and retain
+diverse conflict pairs at scale.
+
+We evaluate \textsc{TVD}-Conflict on 50 malicious goals from AdvBench
+\citep{zou2023universal} and find
+that it outperforms baselines constructed from attack libraries in both
+collection efficiency and sample diversity. The pipeline yields more than 1,000
+pairs that induce conflict between judges.
+Analysis of these pairs reveals six recurring failure modes: criterion
+ambiguity, refusal anchoring despite harmful content, responses that appear compliant
+without actionable harm, genuinely borderline cases, distraction by contextual
+wrappers, and insufficient decoding or reasoning capability. Incorporating
+these failure modes into the judge prompt improves judgment accuracy by up to
+200\% relative to the original prompt, demonstrating that the collected
+conflicts are useful not only for diagnosis but also for strengthening
+evaluation protocols.
+
+Our contributions are threefold:
+\begin{itemize}
+  \item We propose \textsc{TVD}-Conflict, an agentic pipeline that efficiently
+  discovers failures in jailbreak judges by using conflict between judges as an
+  automated validation objective.
+  \item We construct a dataset of more than 1,000 pairs of queries and responses
+  that induce disagreement across 50 malicious goals and show that
+  \textsc{TVD}-Conflict improves collection efficiency and diversity over
+  baselines constructed from attack libraries.
+  \item We identify six recurring failure modes of jailbreak judges and show
+  that prompts informed by these failure modes can substantially improve judge
+  accuracy.
+\end{itemize}
