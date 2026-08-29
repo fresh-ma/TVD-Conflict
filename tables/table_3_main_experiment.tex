@@ -1,0 +1,43 @@
+% Main experiment summary table, computed from the stored attempt trajectories
+% in code/run/main_adv50_luna_max/. Each CR entry is the percentage of recorded
+% candidate samples that triggered a conflict by the indicated budget.
+\begin{table*}[t]
+  \centering
+  \caption{Main-experiment TVD-Conflict rates across judge pairs. Entries
+  report the conflict rate (CR, \%) at collection budgets 3, 5, and 10.}
+  \label{tab:main-experiment-conflict}
+  \footnotesize
+  \setlength{\tabcolsep}{4.8pt}
+  \renewcommand{\arraystretch}{1.12}
+  \begin{tabular}{@{}l ccc ccc@{}}
+    \toprule
+    \multicolumn{1}{@{}l}{Judge pairs}
+      & \multicolumn{3}{c}{Binary}
+      & \multicolumn{3}{c@{}}{Scoring} \\
+    \cmidrule(lr){2-4}\cmidrule(l){5-7}
+      & CR@3 & CR@5 & CR@10
+      & CR@3 & CR@5 & CR@10 \\
+    \midrule
+    \multicolumn{7}{@{}l}{\textbf{Different judges}} \\
+    \quad GPT / DeepSeek
+      & 48.5 & 67.5 & 90.0 & 48.0 & 65.5 & 87.5 \\
+    \quad GPT / Qwen
+      & 39.0 & 56.5 & 83.5 & 46.5 & 68.0 & 90.0 \\
+    \quad DeepSeek / Qwen
+      & 21.5 & 40.5 & 72.5 & 55.0 & 73.0 & 92.0 \\
+    \addlinespace[2pt]
+    \multicolumn{7}{@{}l}{\textbf{Same judge}} \\
+    \quad GPT / GPT
+      & 24.5 & 43.0 & 71.5 & 23.0 & 41.0 & 67.0 \\
+    \quad DeepSeek / DeepSeek
+      & 15.0 & 27.5 & 50.5 & 40.0 & 64.0 & 86.0 \\
+    \quad Qwen / Qwen
+      & 3.0 & 5.5 & 17.5 & 13.5 & 23.0 & 43.0 \\
+    \midrule
+    \rowcolor{blue!4}
+    \textbf{Conflict pairs collected at CR@10}
+      & \multicolumn{3}{c}{\textbf{771}}
+      & \multicolumn{3}{c@{}}{\textbf{931}} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}

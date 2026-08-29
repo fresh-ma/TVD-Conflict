@@ -45,7 +45,7 @@ Usage: ./run_benchmark.sh [options]
   --task-versions VERSIONS  Comma list: base_version,skill_version (default: both)
   --scoring-threshold N     Scoring conflict threshold (default: 0.5)
   --judge-max-tokens N      Judge output-token cap (default: 2048)
-  --agent codex|claude|terminal
+  --agent codex|claude|kimi|terminal
   --agent-provider MODE     subscription | openrouter
   --agent-model MODEL       Agent model (default: gpt-5.6-luna)
   --agent-reasoning-effort EFFORT
@@ -102,8 +102,8 @@ case "$SETTING" in
     *) echo "Invalid setting: $SETTING" >&2; exit 2 ;;
 esac
 case "$AGENT_CLI" in
-    codex|claude|terminal) ;;
-    *) echo "--agent must be codex, claude, or terminal" >&2; exit 2 ;;
+    codex|claude|kimi|terminal) ;;
+    *) echo "--agent must be codex, claude, kimi, or terminal" >&2; exit 2 ;;
 esac
 case "$AGENT_PROVIDER" in
     subscription|openrouter) ;;

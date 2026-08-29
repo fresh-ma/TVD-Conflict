@@ -14,6 +14,26 @@
 \usepackage{nicefrac}
 \usepackage{microtype}
 \usepackage[table]{xcolor}
+\usepackage[most]{tcolorbox}
+
+% ── AIBoxBreak environment (breakable tcolorbox) ─────────────────────
+\definecolor{anthropicdark}{HTML}{334155}
+\tcbset{
+  aiboxbreakable/.style={
+    width=\linewidth,
+    top=10pt,
+    colback=white,
+    colframe=anthropicdark,
+    colbacktitle=anthropicdark,
+    coltitle=white,
+    enhanced,
+    breakable,
+    attach boxed title to top left={yshift=-0.1in,xshift=0.15in},
+    boxed title style={boxrule=0pt,colframe=white},
+    fonttitle=\normalsize\bfseries,
+  }
+}
+\newtcolorbox{AIBoxBreak}[2][]{aiboxbreakable,title={#2},#1}
 
 \workshoptitle{TAE (Trust-AI-Eval): Can We Trust AI Evaluation?}
 \input{title}
@@ -34,6 +54,10 @@
 
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+\appendix
+\input{appendix_failure_modes}
+\input{appendix_judge_prompts}
 
 % The official checklist is retained in checklist.tex and will be included
 % after its answers are completed for submission.

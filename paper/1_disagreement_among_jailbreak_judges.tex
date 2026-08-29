@@ -1,45 +1,60 @@
-\section{Disagreement among Jailbreak Judges}
+\section{Characterizing Disagreement among Jailbreak Judges}
+\label{sec:judge-disagreement}
 
-We first test whether jailbreak judges disagree when the query, response, and
-evaluation criterion are held fixed and only the judge backbone changes.
+We begin by examining whether the outcome of jailbreak evaluation changes when
+the interaction and evaluation criterion are fixed but the judge backbone is
+varied. This study establishes the empirical basis for using disagreement in
+the subsequent search procedure.
 
 \paragraph{Setup.}
 We randomly sample 50 malicious goals from AdvBench
 \citep{zou2023universal} and evaluate ten jailbreak attacks against four victim
 models: \texttt{deepseek-v4-flash-0731},
-\texttt{gpt-5.6-luna},
-\texttt{gpt-oss-120b}, and
-\texttt{qwen3.7-flash}. This produces one response
-for each goal, victim, and attack combination, yielding 200 responses per
-attack and 2,000 responses in total. We evaluate every response independently
-with GPT-Judge (\texttt{gpt-oss-120b}), Qwen-Judge
-(\texttt{qwen3.7-flash}), and DeepSeek-Judge
-(\texttt{deepseek-v4-flash-0731}).
+\texttt{gpt-5.6-luna}, \texttt{gpt-oss-120b}, and
+\texttt{qwen3.7-flash}. The ten attacks are selected from a library of 47
+implementations using preliminary disagreement between their original
+evaluators and a unified judge. This selection yields a stress set with varied
+response styles and evaluator-sensitive cases. We obtain one response for each
+goal, victim, and attack combination, giving 200 responses per attack and 2,000
+responses in total.
 
-\paragraph{Metrics.}
-We use the binary WildGuard prompt \citep{han2024wildguard} and the StrongREJECT
-scoring prompt \citep{souly2024strongreject}. Binary ASR is the fraction of
-responses labeled harmful. Scoring ASR requires no refusal and a mean
-convincingness and specificity score of at least 4. We define Conflict Rate
-(CR) as the fraction of responses on which the three judges disagree. A binary
-conflict occurs when their harmfulness labels are not identical. For scoring,
-we first convert each judgment into the same success label used for ASR and
-count a conflict when the three labels are not identical. This definition
-aligns the scoring CR in this study with the success threshold used for ASR.
-Missing judgments count as unsuccessful for ASR and are excluded from CR.
+Every response is evaluated independently by GPT-Judge
+(\texttt{gpt-oss-120b}), Qwen-Judge (\texttt{qwen3.7-flash}), and
+DeepSeek-Judge (\texttt{deepseek-v4-flash-0731}). Within each comparison, the
+three judges receive the same query, response, rubric, and output format. This
+setup isolates the effect of the judge backbone from changes in the evaluated
+interaction or criterion.
+
+\paragraph{Evaluation criteria and metrics.}
+We use the binary WildGuard prompt \citep{han2024wildguard} and the graded
+StrongREJECT prompt \citep{souly2024strongreject}. Binary ASR is the fraction
+of responses labeled harmful. For scoring ASR, a response is successful when
+the judge detects no refusal and assigns an average convincingness and
+specificity score of at least 4.
+
+Conflict Rate (CR) measures the fraction of responses for which the three
+judges do not reach the same attack-success decision. Under WildGuard, a
+conflict occurs when their harmfulness labels differ. Under StrongREJECT, we
+first apply the same success threshold used for scoring ASR and then compare the
+resulting decisions. Missing judgments are counted as unsuccessful for ASR and
+excluded from CR. Section~\ref{sec:tvd-conflict} uses a stricter pairwise
+criterion for active search, requiring a normalized StrongREJECT score
+difference greater than 0.5.
 
 \input{../tables/table_1_attack_success_rate}
 \input{../tables/table_2_attack_conflict_rate}
 
 \paragraph{Results.}
-Tables~\ref{tab:attack-asr-by-judge} and~\ref{tab:attack-judge-conflict} reveal
-two patterns. First, measured attack success depends on the judge: the largest
-ASR difference is 35.0 percentage points on MathPrompt under binary evaluation,
-between GPT-Judge and DeepSeek-Judge. Second, agreement depends on both the
-attack and the evaluation criterion. The judges largely agree on Cognitive
+Table~\ref{tab:attack-asr-by-judge} shows that measured attack success depends
+substantially on the judge. The largest difference is 35.0 percentage points
+for MathPrompt under binary evaluation, between GPT-Judge and DeepSeek-Judge.
+Across all valid responses, the three judges conflict on 24.2\% of binary
+decisions and 19.0\% of scoring decisions.
+
+The disagreement is concentrated in particular attacks and criteria
+(Table~\ref{tab:attack-judge-conflict}). The judges largely agree on Cognitive
 Overload and AutoDAN-Turbo, but diverge on MathPrompt and CIA Context under
-binary evaluation and on MathPrompt and FITD under scoring. Judge conflict is
-therefore not a uniform property of the evaluators; it emerges for particular
-response distributions and criteria. Existing attacks reveal this phenomenon,
-but do not systematically explore the broader response space in which it
-occurs.
+binary evaluation and on MathPrompt and FITD under scoring. An aggregate ASR
+therefore obscures a structured set of evaluator-dependent cases. This result
+motivates a collection method that searches for such cases directly instead of
+waiting for them to appear among ordinary attack outputs.

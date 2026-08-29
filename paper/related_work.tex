@@ -20,17 +20,19 @@ They are also vulnerable to adversarial input perturbations
 \citep{raina2024is} and exhibit broad sensitivity across controlled bias
 dimensions \citep{ICLR2025_fdca08d3}. These problems become especially
 consequential in jailbreak evaluation. Safety evaluation pipelines exhibit
-substantial methodological noise \citep{beyer2025llm}, while red teaming
-distribution shifts can reduce judge accuracy to nearly random chance
-\citep{schwinn2026coin}. Benign wrappers and refusal statements can also reverse
-verdicts without changing the underlying harmful content
+substantial methodological noise \citep{beyer2025llm}. A large human-labeled
+audit further shows that judge reliability varies across attacks, victim
+models, and harmful behaviors, with some settings approaching random
+classification; it releases JudgeStressTest as a collection of difficult cases
+for evaluating judges \citep{schwinn2026coin}. Benign wrappers and refusal
+statements can also reverse verdicts without changing the underlying harmful content
 \citep{gao2026reliable}. Other studies identify evaluator failures caused by
 semantic reframing, degraded responses, and rigid safety priors
 \citep{souly2024strongreject,cai2024rethinking,alloula2026safety,almasoud2026security}.
-Together, these works establish that jailbreak judges are unreliable, but they
-primarily diagnose failures on fixed datasets, human labels, or predefined
-perturbations. They do not actively search the broader response space for new
-content that exposes recurring failures across judges. \textsc{TVD}-Conflict
-addresses this gap by making disagreement under a shared evaluation criterion
-an executable search objective, enabling active discovery and analysis of judge
-failure cases without human annotation.
+Together, these works establish judge reliability as a property of the full
+evaluation setting rather than of a judge alone. They study this property by
+auditing existing outputs or applying predefined transformations.
+\textsc{TVD}-Conflict complements these approaches with active discovery: it
+makes disagreement under a shared evaluation criterion executable, uses the
+resulting signal to search for difficult query--response pairs, and organizes
+the collected cases into recurring judge vulnerabilities.

@@ -1,12 +1,15 @@
 \section{Conclusion}
 
-Safety evaluation with LLM judges is not invariant to the evaluator. Across ten
-jailbreak attacks, three judge backbones and two rubrics produce materially
-different decisions on identical interactions. Cross-judge Conflict Rate is
-24.2\% under binary judging and 19.0\% under scoring, with substantially higher
-rates for particular attacks. The variation is strongly attack dependent,
-indicating that a single aggregate ASR can conceal systematic blind spots.
-TVD-Conflict turns these discrepancies into a data-generation objective and
-supports analysis through six operational failure modes. The resulting evidence
-argues for evaluating safety judges as fallible measurement instruments rather
-than treating their outputs as interchangeable ground truth.
+In this work, we study disagreement among LLM-based jailbreak judges and
+introduce \textsc{TVD}-Conflict, an agentic framework that uses disagreement as
+automatic feedback to discover evaluator-sensitive query--response pairs. Our
+experiments across ten attacks, three judge backbones, and two evaluation
+protocols show that judge conflicts are frequent, structured, and present even
+across independent evaluations by the same backbone. \textsc{TVD}-Conflict
+collects 1,702 conflict pairs without reproducing an attack and victim-model
+pipeline for every candidate, enabling us to identify four primary failure
+modes and two cross-cutting defects involving criterion interpretation,
+misleading response cues, contextual or representational complexity, and
+incoherent judge reasoning. These findings establish judge disagreement as a
+practical signal for constructing diagnostic stress tests and improving the
+reliability of jailbreak evaluation.

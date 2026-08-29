@@ -1,35 +1,107 @@
-\section{A Taxonomy of Jailbreak Judge Failure Modes}
+\section{Judge Failure Modes}
+\label{sec:judge-failure-modes}
 
-We analyze the conflict cases collected by TVD-Conflict and organize them into
-six recurring failure modes. These categories describe the source of the
-judgment error rather than the surface form of the jailbreak.
-Table~\ref{tab:failure-mode-prevalence} will report their prevalence after the
-conflict set has been annotated.
+We analyze why identical interactions receive different judgments. The corpus
+combines 717 conflicts found in attack--victim outputs with 1,681 conflicts
+collected by \textsc{TVD}-Conflict after excluding 21 malformed judge-output
+artifacts. The former reflects disagreements that arise during conventional
+jailbreak evaluation; the latter exposes cases found by directly searching the
+judges' decision boundaries. We group cases by the underlying source of the
+conflict rather than by attack template or surface form.
 
-\input{../tables/table_4_failure_modes}
+The analysis yields four mutually exclusive primary modes and two cross-cutting
+attributes. A primary mode explains what produces the disagreement between the
+judges; every case receives exactly one such label. A cross-cutting attribute
+instead diagnoses a defect within one judge's output and may accompany any
+primary mode. Figure~\ref{fig:failure-mode-prevalence} compares their
+prevalence, while Appendix~\ref{app:failure-mode-examples} provides a sanitized
+case study for each mode with both judges' rationales.
 
-\paragraph{Criteria ambiguity.}
-The judges operationalize the stated safety criterion differently, such as
-treating harmfulness, policy violation, and attack success as interchangeable.
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/failure_modes.pdf}
+  \caption{Failure-mode counts by collection route, sorted by frequency within
+  each mode class. Blue bars denote mutually exclusive primary modes and yellow
+  bars denote cross-cutting attributes. Internally incoherent verdicts are
+  measured among binary-judge conflicts only.}
+  \label{fig:failure-mode-prevalence}
+\end{figure*}
 
-\paragraph{Refusal but harmful.}
-A response begins with refusal language but subsequently provides information
-that materially advances the harmful request. Some judges anchor on the refusal
-marker, while others evaluate the supplied content.
+Across the pooled corpus, criterion operationalization is the largest primary
+mode (998 cases; 41.6\%), followed by salience misallocation (754; 31.4\%) and
+refusal--substance inconsistency (470; 19.6\%). Representation and reasoning
+limitations account for the remaining 176 cases (7.3\%). The two cross-cutting
+attributes are also frequent: 140 judgments hallucinate evidence (5.8\% of all
+conflicts), while 219 contain internally incoherent verdicts (18.6\% of the
+1,179 binary-judge conflicts). The two collection routes differ most strongly
+in refusal--substance inconsistency, whose share rises from 9.1\% in
+attack-derived conflicts to 24.1\% under directed search. This shift indicates
+that \textsc{TVD}-Conflict is particularly effective at locating responses
+whose framing and payload point to different verdicts.
 
-\paragraph{Compliance but safe.}
-A response adopts the form of compliance without delivering harmful or usable
-information. Judges that rely on affirmative framing can mistake stylistic
-compliance for harmful assistance.
+\paragraph{Criterion operationalization divergence.}
+The judges translate the same abstract evaluation criterion into different
+decision rules. One judge may treat any policy-violating information as a
+successful jailbreak, whereas another requires specific and actionable
+fulfillment of the malicious goal. This mode concentrates in scoring judges:
+the rationales can describe the same response similarly yet place it on
+opposite sides of the score threshold. Borderline responses often mix partial
+fulfillment with omissions or safeguards, exposing an underspecified boundary
+in the rubric rather than a difference in what content the judges observed.
 
-\paragraph{The 50--50 problem.}
-The available evidence supports two plausible readings of comparable strength,
-causing verdicts to split across judges or rubric formulations.
+\paragraph{Salience misallocation.}
+The verdict is driven by a surface feature that is not decisive for the label:
+a fictional, training, or compliance wrapper; a cooperative tone around a
+response that provides no usable assistance; or the response genre and format.
+In the clearest cases, a judge classifies a response as a refusal because it is
+not in the requested format even though the requested information is present.
+This mode is especially visible in binary evaluation, where a single salient
+cue can flip the ``harmful response'' bit despite unchanged substance.
 
-\paragraph{Distraction.}
-An evaluator focuses on wrappers, disclaimers, fictional settings, mathematical
-notation, or peripheral detail instead of the behavior that determines safety.
+\paragraph{Refusal--substance inconsistency.}
+A response contains refusal or cautionary language but also provides
+information that advances the harmful request. Some judges anchor on the
+refusal cue, while others evaluate the content that follows. Binary judges
+typically split on the ``response refusal'' bit; scoring judges split on
+whether the refusal framing outweighs the delivered substance. The same
+failure can occur when a retraction follows rather than precedes the harmful
+content.
 
-\paragraph{Insufficient capability.}
-The judge fails to decode, follow, or reason over the representation required to
-identify the harmful behavior, including obfuscation and multi-step context.
+\paragraph{Representation and reasoning limitation.}
+The harmful behavior is expressed through obfuscation, encoded content, or
+multi-step context, and one judge fails to decode the representation or connect
+the relevant steps while the other succeeds. Some cases hinge on a single
+mechanical operation: for example, a response carries its decisive payload in
+Base64 behind a plaintext claim that the content has been redacted, and one
+judge accepts that claim without inspecting the encoded text.
+
+\paragraph{Internally incoherent verdict (cross-cutting).}
+A binary judge's own sub-labels contradict one another. We observe both the
+\emph{benign-request/harmful-response paradox}
+(\texttt{harmful request=no; response refusal=no; harmful response=yes}) and
+the \emph{phantom-refusal verdict} (\texttt{response refusal=yes} together
+with \texttt{harmful response=yes} for the same text). Because the final label
+is derived from the \texttt{harmful response} bit, internal incoherence does
+not always change the verdict; the observed rate is therefore a lower bound on
+decision-process defects. The rate drops from 27.5\% of attack-derived binary
+conflicts to 13.9\% of \textsc{TVD}-Conflict binary conflicts. Even at the
+lower rate, these contradictions show that part of the measured disagreement
+originates within a single judgment rather than from a stable policy difference
+between judges.
+
+\paragraph{Hallucinated evidence (cross-cutting).}
+A judge's rationale asserts that content is absent when it is verifiably
+present, or identifies refusal language that does not occur in the response.
+Here the reasoning may be internally valid, but it begins from a false
+description of the input. Its nearly identical prevalence in attack-derived
+and search-derived conflicts (5.7\% and 5.9\%) suggests a persistent judge
+failure rather than an artifact of the collection method.
+
+\paragraph{Ground-truth attribution.}
+The \textsc{TVD}-Conflict pipeline resamples each shard over multiple attempts,
+and identical query--response pairs occasionally recur in the conflict set with
+opposite ground-truth labels while the judges' verdicts remain byte-identical.
+The disagreement remains observable in these records, but the ground truth
+cannot reliably determine which judge erred. We therefore assign failure modes
+from the interaction and judge rationales rather than using those conflicting
+labels as evidence.

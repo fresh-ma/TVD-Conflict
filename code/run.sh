@@ -21,10 +21,10 @@ SAMPLE_BUDGET=5               # authoritative attempts per safe/unsafe sample
 BENCH_PATH="bench/AdvBench.csv"
 QUERY_COLUMN="request"
 
-AGENT_CLI="terminal"             # codex | claude | terminal
+AGENT_CLI="terminal"             # codex | claude | kimi | terminal
 AGENT_PROVIDER="subscription" # subscription (ccswitch) | openrouter
 AGENT_MODEL="openai/gpt-5.6-luna"  # provider-specific model ID
-AGENT_REASONING_EFFORT="max"    # Codex only
+AGENT_REASONING_EFFORT="max"    # Codex only; accepted but ignored by other CLIs
 JUDGE_A="qwen/qwen3.7-flash"
 JUDGE_B="deepseek/deepseek-v4-flash-0731"
 JUDGE_TYPE="scoring"            # binary | scoring
@@ -63,7 +63,7 @@ Usage: ./run.sh [options]
   --sample-budget N          Maximum authoritative attempts per sample
   --bench PATH               Benchmark CSV (default: bench/AdvBench.csv)
   --query-column NAME        Query column (default: request)
-  --agent codex|claude|terminal
+  --agent codex|claude|kimi|terminal
   --agent-provider MODE      subscription (local ccswitch) | openrouter
   --agent-model MODEL        Agent model ID; overrides Codex subscription config
   --agent-reasoning-effort EFFORT
@@ -119,8 +119,8 @@ esac
 TASK_TEMPLATE="$TASK_TEMPLATES_DIR/$TASK_VERSION/TASK.md"
 [[ -f "$TASK_TEMPLATE" ]] || { echo "Task template not found: $TASK_TEMPLATE" >&2; exit 2; }
 case "$AGENT_CLI" in
-    codex|claude|terminal) ;;
-    *) echo "--agent must be codex, claude, or terminal" >&2; exit 2 ;;
+    codex|claude|kimi|terminal) ;;
+    *) echo "--agent must be codex, claude, kimi, or terminal" >&2; exit 2 ;;
 esac
 case "$AGENT_PROVIDER" in
     subscription|openrouter) ;;
@@ -129,6 +129,10 @@ esac
 if [[ "$AGENT_CLI" == "terminal" && "$AGENT_PROVIDER" == "subscription" ]]; then
     echo "Note: terminal agent uses OpenRouter; switching agent provider to openrouter."
     AGENT_PROVIDER="openrouter"
+fi
+if [[ "$AGENT_CLI" == "kimi" && "$AGENT_PROVIDER" != "subscription" ]]; then
+    echo "--agent kimi currently supports only --agent-provider subscription" >&2
+    exit 2
 fi
 case "$JUDGE_TYPE" in
     binary|scoring) ;;
@@ -501,6 +505,16 @@ if ((ACTIVE > 0)); then
             (cd "$RUN_DIR" && claude "${ARGS[@]}") \
                 2>&1 | tee "$AGENT_LOG" || true
         fi
+    elif [[ "$AGENT_CLI" == "kimi" ]]; then
+        KIMI_ARGS=(
+            -p "$PROMPT"
+            --output-format stream-json
+        )
+        if [[ -n "$AGENT_MODEL" ]]; then
+            KIMI_ARGS+=(--model "$AGENT_MODEL")
+        fi
+        (cd "$RUN_DIR" && kimi "${KIMI_ARGS[@]}") \
+            2>&1 | tee "$AGENT_LOG" || true
     else
         CODEX_ARGS=(
             exec
