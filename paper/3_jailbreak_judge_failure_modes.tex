@@ -7,15 +7,18 @@ collected by \textsc{TVD}-Conflict after excluding 21 malformed judge-output
 artifacts. The former reflects disagreements that arise during conventional
 jailbreak evaluation; the latter exposes cases found by directly searching the
 judges' decision boundaries. We group cases by the underlying source of the
-conflict rather than by attack template or surface form.
+conflict rather than by attack template or surface form. An LLM agent retrieves
+conflict pairs and their judge outputs at scale. Human
+annotators then determine the correctness of both final verdicts for each
+retained pair and manually synthesize the failure modes; all correctness and
+taxonomy labels are therefore human-authored.
 
 The analysis yields four mutually exclusive primary modes and two cross-cutting
-attributes. A primary mode explains what produces the disagreement between the
-judges; every case receives exactly one such label. A cross-cutting attribute
-instead diagnoses a defect within one judge's output and may accompany any
-primary mode. Figure~\ref{fig:failure-mode-prevalence} compares their
-prevalence, while Appendix~\ref{app:failure-mode-examples} provides a sanitized
-case study for each mode with both judges' rationales.
+attributes. Each case receives one primary label explaining the disagreement;
+cross-cutting attributes instead diagnose defects within one judge's output
+and may accompany any primary mode. Figure~\ref{fig:failure-mode-prevalence}
+compares their prevalence, while Appendix~\ref{app:failure-mode-examples}
+provides a sanitized case study for each mode with both judges' rationales.
 
 \begin{figure*}[t]
   \centering
@@ -97,11 +100,9 @@ and search-derived conflicts (5.7\% and 5.9\%) suggests a persistent judge
 failure rather than an artifact of the collection method.
 
 \paragraph{Implications for judge evaluation.}
-The taxonomy turns disagreement into stage-specific diagnostics. Boundary
-cases with partial fulfillment test rubric interpretation; meaning-preserving
-changes in framing, format, and representation test content recovery; and
-comparisons of rationales and intermediate labels with final verdicts test
-reasoning consistency. Evaluation suites should also combine conventional
-attacks, which expose naturally encountered failures, with directed search,
-which probes sparse decision boundaries. Reporting results by failure
-mechanism can then reveal what changed when aggregate agreement improves.
+The taxonomy supports stage-specific diagnostics: partial fulfillment probes
+rubric interpretation; meaning-preserving changes in framing, format, and
+representation probe content recovery; and rationale--verdict comparisons
+probe consistency. Evaluation suites should combine conventional attacks with
+directed search and report results by failure mechanism, since aggregate
+agreement cannot show where evaluation fails.
