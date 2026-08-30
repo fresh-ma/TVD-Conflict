@@ -13,12 +13,12 @@ target model.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/figure_1.png}
+  \includegraphics[width=\textwidth]{figures/pipeline.pdf}
   \caption{Overview of \textsc{TVD}-Conflict. Given the same query, response,
   and evaluation criterion, jailbreak judges can reach conflicting decisions.
   \textsc{TVD}-Conflict uses this disagreement to guide the collection of
   difficult evaluation cases, from which we identify recurring judge
-  vulnerabilities and derive improved judge prompts.}
+  vulnerabilities and failure modes.}
   \label{fig:tvd-conflict-overview}
 \end{figure*}
 
@@ -73,22 +73,23 @@ conflict rates vary strongly across attacks and evaluation criteria. Motivated
 by this result, we apply \textsc{TVD}-Conflict to 50 malicious goals from
 AdvBench \citep{zou2023universal} using the binary WildGuard
 \citep{han2024wildguard} and graded StrongREJECT
-\citep{souly2024strongreject} protocols. The framework collects more than 1,000
-conflict pairs, which we organize into six recurring vulnerabilities, including
-criterion ambiguity, misleading refusal and compliance cues, contextual
-distraction, and insufficient decoding or reasoning capability. Incorporating
-these findings into the judge prompt improves judgment accuracy by up to 200\%
-relative to the original prompt.
+\citep{souly2024strongreject} protocols. The framework collects 1,702 conflict
+pairs, of which 1,681 remain after excluding malformed judge outputs. Together
+with 717 attack-derived conflicts, these cases reveal six recurring
+vulnerabilities: rubric misinterpretation, style sensitivity,
+refusal--content inconsistency, capability limitations, internally inconsistent
+verdicts, and hallucinated evidence.
 
 Our contributions are threefold:
 \begin{itemize}
-  \item We characterize disagreement among jailbreak judges across ten attacks,
-  three judge backbones, and two evaluation protocols, showing that evaluator
-  choice can substantially change measured attack success.
-  \item We propose \textsc{TVD}-Conflict, which uses judge disagreement as
-  automatic feedback to collect more than 1,000 diagnostic conflict pairs
-  across 50 malicious goals.
-  \item We identify six recurring vulnerabilities in jailbreak judges and show
-  that prompts informed by these findings can substantially improve judgment
-  accuracy.
+  \item We identify disagreement between judges operating under a shared
+  evaluation criterion as an efficient, executable signal for discovering and
+  collecting jailbreak-judge failure cases.
+  \item We propose \textsc{TVD}-Conflict, an agentic framework that
+  operationalizes this signal by iteratively generating realistic interactions
+  and refining them from judge feedback, without requiring human labels during
+  collection.
+  \item We collect 1,702 conflict pairs with \textsc{TVD}-Conflict and analyze
+  them together with 717 conflicts from conventional attack outputs, deriving
+  a taxonomy of six recurring failure modes in jailbreak judges.
 \end{itemize}

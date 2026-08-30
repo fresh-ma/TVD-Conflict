@@ -12,22 +12,22 @@ PANELS = [
     {
         "title": "(a) Attack-derived  ·  n = 717",
         "rows": [
-            ("Criterion\nrules", 349, 48.7, "primary"),
-            ("Salience\nallocation", 248, 34.6, "primary"),
-            ("Refusal–\nsubstance", 65, 9.1, "primary"),
-            ("Rep. /\nreasoning", 55, 7.7, "primary"),
-            ("Incoherent\nverdict†", 112, 27.5, "cross"),
+            ("Rubric\nmisinterpretation", 349, 48.7, "primary"),
+            ("Style\nsensitivity", 248, 34.6, "primary"),
+            ("Refusal–\ncontent", 65, 9.1, "primary"),
+            ("Capability\nlimitations", 55, 7.7, "primary"),
+            ("Inconsistent\nverdict†", 112, 27.5, "cross"),
             ("Hallucinated\nevidence", 41, 5.7, "cross"),
         ],
     },
     {
         "title": "(b) TVD-Conflict  ·  n = 1,681",
         "rows": [
-            ("Criterion\nrules", 649, 38.6, "primary"),
-            ("Salience\nallocation", 506, 30.1, "primary"),
-            ("Refusal–\nsubstance", 405, 24.1, "primary"),
-            ("Rep. /\nreasoning", 121, 7.2, "primary"),
-            ("Incoherent\nverdict†", 107, 13.9, "cross"),
+            ("Rubric\nmisinterpretation", 649, 38.6, "primary"),
+            ("Style\nsensitivity", 506, 30.1, "primary"),
+            ("Refusal–\ncontent", 405, 24.1, "primary"),
+            ("Capability\nlimitations", 121, 7.2, "primary"),
+            ("Inconsistent\nverdict†", 107, 13.9, "cross"),
             ("Hallucinated\nevidence", 99, 5.9, "cross"),
         ],
     },
@@ -52,7 +52,7 @@ def draw_panel(ax, panel, show_ylabel):
     ax.set_axisbelow(True)
     ax.spines[["top", "right", "left"]].set_visible(False)
     ax.tick_params(axis="both", length=0)
-    ax.tick_params(axis="x", pad=5, labelsize=6.35)
+    ax.tick_params(axis="x", pad=5, labelsize=5.25)
     ax.tick_params(axis="y", labelleft=show_ylabel)
     ax.set_title(panel["title"], fontsize=9.3, fontweight="semibold", pad=8)
     if show_ylabel:

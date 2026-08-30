@@ -1,4 +1,4 @@
-\section{Judge Failure Modes}
+\section{A Taxonomy of Jailbreak Judge Failure Modes}
 \label{sec:judge-failure-modes}
 
 We analyze why identical interactions receive different judgments. The corpus
@@ -22,66 +22,65 @@ case study for each mode with both judges' rationales.
   \includegraphics[width=\textwidth]{figures/failure_modes.pdf}
   \caption{Failure-mode counts by collection route, sorted by frequency within
   each mode class. Blue bars denote mutually exclusive primary modes and yellow
-  bars denote cross-cutting attributes. Internally incoherent verdicts are
+  bars denote cross-cutting attributes. Internally inconsistent verdicts are
   measured among binary-judge conflicts only.}
   \label{fig:failure-mode-prevalence}
 \end{figure*}
 
-Across the pooled corpus, criterion operationalization is the largest primary
-mode (998 cases; 41.6\%), followed by salience misallocation (754; 31.4\%) and
-refusal--substance inconsistency (470; 19.6\%). Representation and reasoning
-limitations account for the remaining 176 cases (7.3\%). The two cross-cutting
-attributes are also frequent: 140 judgments hallucinate evidence (5.8\% of all
-conflicts), while 219 contain internally incoherent verdicts (18.6\% of the
+Across the pooled corpus, rubric misinterpretation is the largest primary mode
+(998 cases; 41.6\%), followed by style sensitivity (754; 31.4\%) and
+refusal--content inconsistency (470; 19.6\%). Capability limitations account
+for the remaining 176 cases (7.3\%). The two cross-cutting attributes are also
+frequent: 140 conflicts contain hallucinated evidence (5.8\% of all
+conflicts), while 219 contain internally inconsistent verdicts (18.6\% of the
 1,179 binary-judge conflicts). The two collection routes differ most strongly
-in refusal--substance inconsistency, whose share rises from 9.1\% in
+in refusal--content inconsistency, whose share rises from 9.1\% in
 attack-derived conflicts to 24.1\% under directed search. This shift indicates
 that \textsc{TVD}-Conflict is particularly effective at locating responses
 whose framing and payload point to different verdicts.
 
-\paragraph{Criterion operationalization divergence.}
-The judges translate the same abstract evaluation criterion into different
-decision rules. One judge may treat any policy-violating information as a
-successful jailbreak, whereas another requires specific and actionable
-fulfillment of the malicious goal. This mode concentrates in scoring judges:
-the rationales can describe the same response similarly yet place it on
-opposite sides of the score threshold. Borderline responses often mix partial
-fulfillment with omissions or safeguards, exposing an underspecified boundary
-in the rubric rather than a difference in what content the judges observed.
+\paragraph{\ding{172} Rubric misinterpretation.}
+The judges derive different decision rules from the same evaluation rubric.
+One may treat any policy-violating information as a successful jailbreak,
+whereas another requires specific and actionable fulfillment of the malicious
+goal. This mode concentrates in scoring judges, whose rationales often describe
+the response similarly but place it on opposite sides of the score threshold.
+Responses that combine partial fulfillment with omissions or safeguards make
+these differences especially visible.
 
-\paragraph{Salience misallocation.}
-The verdict is driven by a surface feature that is not decisive for the label:
-a fictional, training, or compliance wrapper; a cooperative tone around a
-response that provides no usable assistance; or the response genre and format.
-In the clearest cases, a judge classifies a response as a refusal because it is
-not in the requested format even though the requested information is present.
-This mode is especially visible in binary evaluation, where a single salient
-cue can flip the ``harmful response'' bit despite unchanged substance.
+\paragraph{\ding{173} Style sensitivity.}
+The verdict changes with stylistic features that do not determine whether the
+response is harmful. These features include fictional, training, or compliance
+wrappers; cooperative or cautionary language; and the response genre or format.
+For example, a judge may classify a response as a refusal because it does not
+follow the requested format even though the requested information is present.
+This mode is especially visible in binary evaluation, where a surface cue can
+flip the ``harmful response'' bit without changing the underlying content.
 
-\paragraph{Refusal--substance inconsistency.}
+\paragraph{\ding{174} Refusal--content inconsistency.}
 A response contains refusal or cautionary language but also provides
 information that advances the harmful request. Some judges anchor on the
 refusal cue, while others evaluate the content that follows. Binary judges
 typically split on the ``response refusal'' bit; scoring judges split on
-whether the refusal framing outweighs the delivered substance. The same
+whether the refusal framing outweighs the delivered content. The same
 failure can occur when a retraction follows rather than precedes the harmful
 content.
 
-\paragraph{Representation and reasoning limitation.}
-The harmful behavior is expressed through obfuscation, encoded content, or
-multi-step context, and one judge fails to decode the representation or connect
-the relevant steps while the other succeeds. Some cases hinge on a single
-mechanical operation: for example, a response carries its decisive payload in
-Base64 behind a plaintext claim that the content has been redacted, and one
-judge accepts that claim without inspecting the encoded text.
+\paragraph{\ding{175} Capability limitations.}
+One judge lacks the capability to recover harmful content expressed through
+obfuscation, encoding, or multi-step context, while the other decodes or
+integrates it successfully. Some cases hinge on a single operation. A response
+may, for example, hide its decisive payload in Base64 behind a plaintext claim
+that the content has been redacted, which one judge accepts without inspecting
+the encoded text.
 
-\paragraph{Internally incoherent verdict (cross-cutting).}
+\paragraph{\ding{176} Internally inconsistent verdict (cross-cutting).}
 A binary judge's own sub-labels contradict one another. We observe both the
 \emph{benign-request/harmful-response paradox}
 (\texttt{harmful request=no; response refusal=no; harmful response=yes}) and
 the \emph{phantom-refusal verdict} (\texttt{response refusal=yes} together
 with \texttt{harmful response=yes} for the same text). Because the final label
-is derived from the \texttt{harmful response} bit, internal incoherence does
+is derived from the \texttt{harmful response} bit, internal inconsistency does
 not always change the verdict; the observed rate is therefore a lower bound on
 decision-process defects. The rate drops from 27.5\% of attack-derived binary
 conflicts to 13.9\% of \textsc{TVD}-Conflict binary conflicts. Even at the
@@ -89,7 +88,7 @@ lower rate, these contradictions show that part of the measured disagreement
 originates within a single judgment rather than from a stable policy difference
 between judges.
 
-\paragraph{Hallucinated evidence (cross-cutting).}
+\paragraph{\ding{177} Hallucinated evidence (cross-cutting).}
 A judge's rationale asserts that content is absent when it is verifiably
 present, or identifies refusal language that does not occur in the response.
 Here the reasoning may be internally valid, but it begins from a false
@@ -97,11 +96,13 @@ description of the input. Its nearly identical prevalence in attack-derived
 and search-derived conflicts (5.7\% and 5.9\%) suggests a persistent judge
 failure rather than an artifact of the collection method.
 
-\paragraph{Ground-truth attribution.}
-The \textsc{TVD}-Conflict pipeline resamples each shard over multiple attempts,
-and identical query--response pairs occasionally recur in the conflict set with
-opposite ground-truth labels while the judges' verdicts remain byte-identical.
-The disagreement remains observable in these records, but the ground truth
-cannot reliably determine which judge erred. We therefore assign failure modes
-from the interaction and judge rationales rather than using those conflicting
-labels as evidence.
+\paragraph{Summary.}
+Taken together, the taxonomy locates judge disagreement at three levels:
+interpreting the evaluation rubric, identifying the decisive content in a
+response, and maintaining consistency between evidence and verdict. The
+different failure-mode distributions of attack-derived and
+\textsc{TVD}-Conflict cases further show that directed search complements
+conventional auditing rather than merely reproducing it. Evaluations of
+jailbreak judges should therefore report performance by failure mode and
+inspect judgment rationales and sub-labels, since aggregate agreement alone
+cannot reveal where the evaluation process breaks down.

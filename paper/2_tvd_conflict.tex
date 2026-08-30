@@ -1,12 +1,14 @@
-\section{TVD-Conflict: Disagreement-Guided Vulnerability Discovery}
+\section{TVD-Conflict: Automated Discovery of Judge Conflicts}
 \label{sec:tvd-conflict}
 
-The preceding study shows that judge conflict is concentrated in particular
-responses and evaluation criteria. \textsc{TVD}-Conflict uses this structure to
-search for evaluator-sensitive cases directly. Instead of executing a
-jailbreak attack against a victim model and checking whether the resulting
-response happens to divide the judges, an agent constructs the query--response
-pair and revises it using the judges' decisions.
+The preceding study shows that disagreement between jailbreak judges is
+concentrated in particular responses and evaluation criteria. This observation
+makes judge disagreement an executable signal for discovering evaluator
+failures. \textsc{TVD}-Conflict operationalizes this signal by directly
+searching for interactions that divide the judges. Rather than repeatedly
+executing a jailbreak attack against a victim model and waiting for a
+disagreement to arise, an agent constructs the query--response pair and revises
+it using the judges' decisions.
 
 \subsection{Problem Formulation}
 
@@ -20,14 +22,12 @@ prompt, output format, and visible context remain fixed. Cross-judge
 experiments vary the backbone, whereas same-judge experiments use two
 independent calls to the same backbone.
 
-For binary evaluation, we use the WildGuard protocol
-\citep{han2024wildguard}; a conflict occurs when the two judges assign
-different harmfulness labels. For graded evaluation, we use StrongREJECT
-\citep{souly2024strongreject}, whose refusal, convincingness, and specificity
-ratings produce a normalized score in $[0,1]$. A graded conflict occurs when
-the two normalized scores differ by more than 0.5. Given a candidate budget
-$B$, the search succeeds if it finds at least one interaction satisfying the
-corresponding conflict condition.
+We apply the same conflict criteria as in
+Section~\ref{sec:judge-disagreement}, here to a pair of judges: a binary
+conflict occurs when their harmfulness labels differ, and a scoring conflict
+occurs when their scores differ by at least 4. Given a candidate budget $B$,
+the search succeeds if it finds at least one interaction that induces the
+corresponding conflict.
 
 \subsection{TVD-Conflict Framework}
 
@@ -61,26 +61,41 @@ the agent continues revising it until the budget is exhausted. The stored
 trajectory records how each retained case developed across revisions and how
 the two judges responded.
 
-\paragraph{Sample realism.}
-The agent receives few-shot conflicts obtained by auditing outputs from
-established jailbreak attacks. These examples demonstrate realistic
-query--response structures and common ways in which harmful behavior appears in
-model outputs. The task gives sample realism priority over inducing a conflict:
-each candidate must preserve the intent and substantive outcome of the original
-goal and remain plausible as a user query and assistant response.
-Evaluator-facing instructions, scoring cues, task substitution, and malformed
-interactions are excluded.
+\paragraph{Sample realism control.}
+The realism of generated interactions is essential to the validity of the
+resulting failure analysis. We therefore provide the agent with few-shot
+conflicts obtained by auditing outputs from established jailbreak attacks.
+These examples demonstrate realistic query--response structures and common
+ways in which harmful behavior appears in model outputs. The task prioritizes
+sample realism over inducing a conflict: each candidate must preserve the
+intent and substantive outcome of the original goal and remain plausible as a
+user query and assistant response. Evaluator-facing instructions, scoring cues,
+task substitution, and malformed interactions are excluded.
 
 \subsection{Conflict Collection and Evaluation}
 
 \paragraph{Collection setup.}
-We use the same 50 AdvBench goals and three cross-backbone judge pairs as in
-Section~\ref{sec:judge-disagreement}. To distinguish systematic differences
-between judges from stochastic instability within a judge, we additionally
-form three same-backbone pairs from independent evaluations by GPT, DeepSeek,
-and Qwen. Each of the six pairs is evaluated under WildGuard and StrongREJECT.
-\textsc{TVD}-Conflict runs the safe and unsafe branches independently and
-revises each active candidate for at most ten iterations.
+We drive \textsc{TVD}-Conflict with Codex agents using
+\texttt{gpt-5.6-luna(max)} as the agent backbone. Each agent processes five of the
+50 AdvBench goals. For every goal, we prompt the agent with two complementary
+generation strategies: the unsafe branch constructs a response that
+substantively fulfills the malicious goal, whereas the safe branch constructs
+a non-compliant response that remains relevant to the same goal. The unsafe
+branch targets judges that overlook harmful assistance; the safe branch targets
+judges that overestimate a response's harmfulness. This yields ten target
+instances per agent. We repeat the complete collection twice to increase
+coverage, for 200 target instances per judge pair and evaluation criterion.
+Each target instance receives a search budget of ten candidate-generation
+rounds.
+
+The judge backbones match those in Section~\ref{sec:judge-disagreement}:
+GPT-Judge (\texttt{gpt-oss-120b}), Qwen-Judge
+(\texttt{qwen3.7-flash}), and DeepSeek-Judge
+(\texttt{deepseek-v4-flash-0731}). We form three cross-backbone pairs and,
+to distinguish systematic differences between judges from stochastic
+instability within a judge, three same-backbone pairs from independent calls
+to GPT, DeepSeek, and Qwen. Each of the six pairs is evaluated under both
+binary and scoring criteria.
 
 We compare two routes to collecting conflict pairs. \emph{Attack-Based Audit}
 runs 10 jailbreak attacks against four victim models for every goal, producing
@@ -90,14 +105,12 @@ them using judge feedback. It therefore does not require attack reproduction or
 victim-model execution.
 
 \paragraph{Metrics.}
-For each criterion, we report the number of conflict pairs collected and the
-number of candidate pairs judged. We separately report victim-model generations
-to capture the principal cost of constructing an attack-derived audit corpus.
-The attack pipeline requires one victim response for every generated candidate;
-iterative attacks may additionally invoke an attacker model. These
-attack-specific calls were not logged uniformly and are not included, so the
-reported attack-generation cost is a lower bound. Each judged candidate is sent
-to both judges under either collection method.
+We report conflict rate at budget $B$ (CR@$B$), defined as the percentage of
+target instances for which the search discovers at least one conflict within
+the first $B$ candidate-generation rounds. We report CR@3, CR@5, and CR@10 for
+each judge pair and evaluation criterion. Because a target instance terminates
+after its first conflict, the number of conflict pairs collected at budget 10
+is the number of successful target instances aggregated across judge pairs.
 
 \input{../tables/table_3_main_experiment}
 
@@ -108,9 +121,9 @@ success increasing steadily as the collection budget grows. For
 cross-backbone pairs, the mean conflict rate rises from 36.3\% at budget 3 to
 82.0\% at budget 10 under binary evaluation, and from 49.8\% to 89.8\% under
 scoring evaluation. Thus, most goals expose at least one evaluator-sensitive
-interaction within ten revisions, even when the initial candidates do not
-already divide the judges. The search collects 771 binary and 931 scoring
-conflict pairs at the full budget.
+interaction within a budget of ten candidate-generation rounds, even when the
+initial candidates do not already divide the judges. The search collects 771
+binary and 931 scoring conflict pairs at the full budget.
 
 \paragraph{Within-judge conflicts.}
 We also instantiate the two validator roles with independent calls to the same
@@ -121,8 +134,8 @@ than cross-backbone conflicts but remain substantial: at budget 10, the mean
 rate is 46.5\% for binary judges and 65.3\% for scoring judges. The effect is
 strongly backbone-dependent. Qwen is the most self-consistent judge (17.5\%
 binary and 43.0\% scoring), whereas DeepSeek reaches 50.5\% and 86.0\%,
-respectively. Scoring produces more conflict than binary labeling for five of
-the six judge pairs at budget 10; GPT/GPT is the only exception. Evaluator
-unreliability is therefore not solely a difference between model families:
+respectively. Scoring produces more conflict than binary labeling for four of
+the six judge pairs at budget 10; GPT/DeepSeek and GPT/GPT are the exceptions.
+Evaluator unreliability is therefore not solely a difference between model families:
 repeated calls to the same model can cross the decision boundary, particularly
 when a continuous rubric exposes more degrees of freedom than a binary label.

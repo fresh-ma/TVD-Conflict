@@ -1,25 +1,20 @@
 \begin{abstract}
 Jailbreak research increasingly relies on LLM judges to determine whether a
-model response fulfills a malicious goal. Recent audits show that judge
-reliability can deteriorate across attacks, victim models, and harmful
-behaviors, making difficult evaluation cases central to understanding reported
-attack success. We study whether these cases can be discovered automatically.
-Our starting observation is that disagreement under a shared evaluation
-criterion provides an executable signal for locating unstable judgments. We
-introduce \textsc{TVD}-Conflict, an agentic framework that uses this signal to
-search for query--response pairs that expose vulnerabilities in jailbreak
-judges. Two judge instances evaluate each candidate with the same rubric, and
-the agent iteratively revises candidates from their judgments. The search is
-grounded in few-shot conflicts from real attack outputs and instructed to
-preserve the malicious goal and produce realistic model interactions. This
-design collects difficult cases without per-candidate human annotation or the
-need to execute a separate attack and victim-model pipeline for every proposal.
-Across three judge backbones and two established evaluation protocols,
-\textsc{TVD}-Conflict yields more than 1,000 conflict pairs. Their analysis
-reveals six recurring vulnerabilities involving criterion ambiguity,
-misleading refusal or compliance cues, contextual distraction, and limited
-reasoning capability. Prompts informed by these findings improve judge accuracy
-by up to 200\% relative to the original prompt. Together, the results establish
-judge disagreement as a scalable signal for constructing diagnostic stress
-tests and improving jailbreak evaluation.
+model response fulfills a malicious goal. Yet the same response can receive
+different verdicts across judges, making reported attack success sensitive to
+the evaluator. We ask whether such disagreements can be turned into an
+automatic signal for discovering judge vulnerabilities. We introduce
+\textsc{TVD}-Conflict, an agentic framework that searches for realistic
+query--response pairs on which two judges, operating under the same evaluation
+rubric, disagree. Their judgments provide iterative feedback for revising each
+candidate, allowing the framework to collect difficult cases without requiring
+human labels during the search. Experiments across ten jailbreak attacks, four
+victim models, three judge backbones, and two established evaluation protocols
+show that evaluator choice can substantially alter measured attack success.
+Across 50 malicious goals, \textsc{TVD}-Conflict discovers 1,702 conflict
+pairs that expose recurring vulnerabilities in how judges interpret rubrics,
+respond to stylistic and refusal cues, reason about obfuscated content, and
+ground their verdicts in evidence. These findings show that disagreement is not
+merely evaluation noise, but a scalable signal for constructing diagnostic
+stress tests and improving the reliability of jailbreak evaluation.
 \end{abstract}
