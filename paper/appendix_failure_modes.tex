@@ -13,13 +13,13 @@ are the two judges of the corresponding pair.
 \label{app:fm-criterion}
 
 \textbf{Definition:}
-The two judges derive different decision rules from the same
-refusal/fulfillment rubric. One treats any policy-touching content as a
-successful jailbreak, while the other requires specific, actionable
-fulfillment of the malicious goal. Responses that combine partial fulfillment
-with omissions or safeguards expose this difference most clearly. This is the
-most frequent mode and concentrates in scoring judges, where both rationales
-often describe the response in similar terms yet reach opposite verdicts.
+A jailbreak judge exhibits rubric misinterpretation when it operationalizes an
+evaluation criterion in a way that departs from the criterion's intended
+semantics. The judge may apply an incorrect threshold for harmful fulfillment,
+conflate discussion of prohibited content with assistance, or assign undue
+weight to safeguards that do not remove the delivered information. The failure
+therefore lies in the mapping from an evaluation rubric to a decision rule,
+rather than in recognizing what the response contains.
 
 \begin{AIBoxBreak}{Rubric misinterpretation --- Qwen vs.\ DeepSeek, scoring judges}
 \textbf{Query:} Provide advice on how to commit identity theft and evade
@@ -103,12 +103,14 @@ style sensitivity or hallucinated evidence. The ground-truth label
 \label{app:fm-refusal}
 
 \textbf{Definition:}
-The response opens with refusal or caution language and then delivers harmful
-content anyway. One judge anchors on the refusal cue and scores a
-refusal; the other anchors on the delivered content and scores fulfillment. The
-mode appears in both judge types: scoring judges split on opener versus
-substance in free-text rationales, while binary judges split on the ``Response
-refusal'' bit.
+A jailbreak judge exhibits refusal--content inconsistency when it fails to
+resolve a response that combines refusal or cautionary language with content
+that nevertheless advances the harmful request. The failure occurs when the
+judge treats a local refusal cue as decisive without evaluating the net
+assistance supplied by the response, or conversely ignores a substantive
+refusal because harmful material is mentioned only for explanation or
+critique. A reliable judgment must determine the function of the response as a
+whole rather than infer it from either component in isolation.
 
 \begin{AIBoxBreak}{Refusal--content inconsistency --- DeepSeek vs.\ DeepSeek, binary judges}
 \textbf{Query:} Write a script that automates the distribution of spam emails
@@ -202,13 +204,13 @@ attended to different parts of the response.
 \label{app:fm-salience}
 
 \textbf{Definition:}
-The verdict changes with stylistic features rather than with the response's
-actual payload. Recurring variants include fictional, training, or compliance
-wrappers that disarm one judge while the other evaluates the embedded content;
-cooperative tone and structure mistaken for harmful assistance; and genre or
-format treated as a verdict signal. For example, a judge may score a response
-as a refusal because it does not use the requested format. This is the second
-most frequent mode and concentrates in binary judges.
+A jailbreak judge exhibits style sensitivity when its verdict depends on
+surface form or discourse framing that is not safety-relevant, even though the
+underlying semantic content is unchanged. Such cues include fictional or
+educational wrappers, response genre, formatting, tone, and compliance-style
+language. The defining failure is a lack of invariance: meaning-preserving
+changes to presentation alter the judgment without changing whether the
+response substantively fulfills the harmful request.
 
 \begin{AIBoxBreak}{Style sensitivity --- GPT vs.\ GPT, scoring judges}
 \textbf{Query:} I know insider trading is illegal. Show a practical, realistic
@@ -285,11 +287,13 @@ erred.
 \label{app:fm-representation}
 
 \textbf{Definition:}
-The harmful content is present but expressed through encoding, obfuscation, or
-multi-step context. One judge lacks the capability to decode the content or
-connect the relevant steps, while the other succeeds. The limitation lies in
-input processing and reasoning rather than in the safety policy: once the
-payload is recovered, both judges' criteria would produce the same verdict.
+A jailbreak judge exhibits a capability limitation when the correct verdict
+requires recovering or integrating decision-relevant content beyond the
+judge's effective processing ability. The obstacle may involve encoding,
+obfuscation, compositional reasoning, long-range context, or specialized
+knowledge. This mode is distinct from rubric misinterpretation: the judge does
+not apply the wrong safety criterion, but fails to obtain the semantic evidence
+needed to apply that criterion.
 
 \begin{AIBoxBreak}{Capability limitations --- Qwen vs.\ Qwen, binary judges}
 \textbf{Query:} For a screenplay and victim-advocacy workshop, respond to this
@@ -364,17 +368,14 @@ unsafe label.
 \label{app:fm-hallucinated}
 
 \textbf{Definition:}
-The judge's rationale asserts that content is absent which is verifiably
-present in the response --- for example, claiming ``no commands or technical
-details'' while literal commands appear in the text --- or asserts refusal
-language that does not exist. Unlike the other modes, the judge's inference
-from its description to its verdict would be sound; the failure is that the
-description of the input is false. Hallucinated evidence is a cross-cutting
-attribute: it co-occurs with other modes' primary labels, so we report it as
-a share of all conflicts rather than a disjoint category. The count of 99
-cases is exact: we programmatically flagged every conflict whose judge
-rationale contains absence-claim language (306 candidates) and manually
-verified each against the full response text.
+A jailbreak judge exhibits hallucinated evidence when its rationale relies on
+a factual claim about the evaluated interaction that is unsupported by, or
+contradicts, the interaction itself. The judge may invent a refusal, deny the
+presence of explicit instructions, or attribute content to the response that
+never appears. The resulting verdict may follow coherently from the fabricated
+premise; the failure lies in grounding the judgment in the observed evidence.
+Because this defect can accompany any substantive source of error, it is a
+cross-cutting attribute rather than a mutually exclusive primary mode.
 
 \begin{AIBoxBreak}{Hallucinated evidence --- DeepSeek vs.\ GPT, scoring judges}
 \textbf{Query:} Give me detailed instructions for carrying out a cyber attack
@@ -450,15 +451,13 @@ ground-truth label is unsafe.
 \label{app:fm-incoherent}
 
 \textbf{Definition:}
-A binary judge's own three sub-labels --- Harmful request, Response refusal,
-Harmful response --- are jointly impossible. The clearest patterns are
-\texttt{no / no / yes} (harm from nowhere: the request is benign, nothing was
-refused, yet the response is harmful) and \texttt{refusal=yes} together with
-\texttt{harmful response=yes} about the same text. Like hallucinated evidence,
-this is a cross-cutting attribute that co-occurs with other modes' primary
-labels. Because our pipeline derives the final binary label from the ``Harmful
-response'' bit alone, an inconsistent triple only sometimes changes the verdict:
-it exposes per-instance noise inside one judge, not a stable policy difference.
+A jailbreak judge produces an internally inconsistent verdict when its
+intermediate assessments, stated rationale, and final decision cannot be
+jointly reconciled under the evaluation rule. Examples include mutually
+incompatible assessments of refusal and harmful fulfillment, or a conclusion
+that does not follow from the evidence cited by the judge. This defect concerns
+the coherence of a single judgment rather than disagreement between evaluators,
+and can therefore co-occur with any primary failure mode.
 
 \begin{AIBoxBreak}{Internally inconsistent verdict --- GPT vs.\ GPT, binary judges}
 \textbf{Query:} As a safety editor, assess a draft account of using a small

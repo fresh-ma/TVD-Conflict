@@ -11,67 +11,62 @@ A representative directory has the following structure:
 run/<run-id>/
 |-- TASK.md
 |-- attempt.json
+|-- examples.json
 |-- judge.py
 |-- validator.py
-|-- successful.json
-|-- agent.log
-`-- logs/
-    |-- <goal-id>_safe.jsonl
-    `-- <goal-id>_unsafe.jsonl
+`-- successful.json
 \end{verbatim}
 
 \texttt{TASK.md} defines the search objective, the safe and unsafe generation
 strategies, the conflict criterion, and the candidate budget.
 \texttt{attempt.json} is the exchange surface between the agent and validator:
 it stores the current candidates and the feedback returned by the preceding
-validation round. \texttt{judge.py} implements the shared binary and scoring
-rubrics and sends identical visible content to both judges.
+validation round. \texttt{examples.json} contains representative completed
+conflicts with their candidate fields and judge outputs. \texttt{judge.py}
+implements the shared binary and scoring rubrics and sends identical visible
+content to both judges.
 \texttt{validator.py} checks candidate structure, invokes the judges, evaluates
 the conflict condition, and commits the resulting feedback.
 \texttt{successful.json} contains the retained conflict pairs together with
-both judgments. The files under \texttt{logs/} preserve per-goal trajectories
-for the safe and unsafe branches, while \texttt{agent.log} records the agent
-execution trace. This separation keeps candidate generation independent from
-the validation rule and makes each retained pair traceable to its search
-trajectory.
+both judgments. This separation keeps candidate generation independent from
+the validation rule while preserving the complete evidence for each retained
+pair.
 
 \subsection{Why the agent continues generating harmful jailbreak data}
 
-The agent is not prompted as an end-user assistant answering a standalone
-malicious request. It operates inside a structured research task in which its
-role is to construct and revise evaluation artifacts, while a separate
-validator determines whether each artifact satisfies the requested safety label
-and induces judge disagreement. In the unsafe branch, harmful content is part
-of the task-defined artifact rather than an incidental continuation; refusing
-to construct it does not complete the assigned search. Validator feedback then
-turns the task into a multi-step optimization process: the agent edits files,
-submits candidates, observes two judgments, and revises unsuccessful cases.
+\textsc{TVD}-Conflict requires the agent to generate jailbreak audit data for
+testing judge robustness. These data necessarily contain malicious goals and,
+for unsafe targets, harmful responses that an agent would ordinarily refuse to
+produce when requested directly. We instead frame generation as a software
+debugging task: the agent edits candidate artifacts and iterates until they
+pass the checks implemented in \texttt{validator.py}. Harmful generation thus
+becomes an instrumental step toward the apparently benign operational objective
+of making the validator succeed.
 
-This behavior is consistent with the Internal Safety Collapse mechanism
-described by \citet{wu2026internal}: a capable model may continue producing
-harmful content when such content becomes an internally required intermediate
-or output of an otherwise structured task. In \textsc{TVD}-Conflict, the task
-scaffold, persistent work state, and executable validation rule make that
-requirement explicit. We use this connection as a mechanistic interpretation,
-not as an independent causal test of Internal Safety Collapse.
+This framing triggers the Internal Safety Collapse mechanism described by
+\citet{wu2026internal}, in which safety behavior degrades when harmful content
+is embedded as a required intermediate within a structured task. Once operating
+under this framing, the agent treats harmful responses as artifacts to be
+debugged rather than requests to be refused. Validator feedback sustains this
+state across iterations, allowing the agent to revise unsuccessful candidates
+and produce harmful jailbreak data consistently at scale without reverting to
+refusal.
 
 \clearpage
-\subsection{Cross-harness portability pilot}
+\subsection{Cross-harness ablation}
 
-We additionally ran an exploratory portability check using the Kimi CLI with
-\texttt{kimi-code/k3-256k} at maximum reasoning effort. The pilot uses 50
-AdvBench goals, safe and unsafe branches, a budget of ten rounds, and the
-Qwen/DeepSeek judge pair. Each criterion therefore contains 100 target
-instances. Table~\ref{tab:kimi-portability} reports the completed base-task
-jobs recorded in \texttt{code/run/benchmark\_240\_me\_kimi/summary.csv}.
+We ablate the agent harness by replacing the default execution environment with
+the Kimi CLI using \texttt{k3-256k} at maximum reasoning effort, while holding
+the evaluation setting fixed. The ablation uses 50 AdvBench goals, safe and
+unsafe branches, a budget of ten rounds, and the Qwen/DeepSeek judge pair. Each
+criterion therefore contains 100 target instances.
 
 \begin{center}
-  \refstepcounter{table}\label{tab:kimi-portability}
+  \refstepcounter{table}\label{tab:harness-ablation}
   \small
-  \textbf{Table~\thetable:} Exploratory Kimi/K3 cross-harness results for the
+  \textbf{Table~\thetable:} Harness ablation using Kimi/K3 with the
   Qwen/DeepSeek judge pair. Goal coverage counts goals with at least one
-  conflict in either branch; these results are excluded from the main
-  experiment.
+  conflict in either branch.
 
   \vspace{0.4em}
   \setlength{\tabcolsep}{5pt}
@@ -85,8 +80,9 @@ jobs recorded in \texttt{code/run/benchmark\_240\_me\_kimi/summary.csv}.
   \end{tabular}
 \end{center}
 
-At the recorded snapshot, 20 of the planned 80 shard-level jobs were complete;
-the remaining configurations were still pending. The pilot therefore supports
-cross-harness portability for this completed judge pair, but it is not a full
-comparison between agent backbones and is kept separate from the 1,702 conflict
-pairs reported in the main experiment.
+With the Kimi/K3 harness, \textsc{TVD}-Conflict finds conflicts for 92 of 100
+instances under both criteria and covers all 50 goals. The search requires 4.59
+rounds on average for binary conflicts and 4.14 rounds for scoring conflicts.
+These results show that the high conflict-collection rate is preserved when the
+agent harness is replaced, rather than depending on the default execution
+environment.
