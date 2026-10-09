@@ -58,7 +58,9 @@ historical scoring-selection rules, which are recorded explicitly for each case.
 
 ## Method Overview
 
-TVD-Conflict instantiates a **Task–Validator–Data** feedback loop:
+Inspired by the **Task–Validator–Data (TVD)** framework in
+[Internal Safety Collapse](https://github.com/wuyoscar/Internal-Safety-Collapse),
+TVD-Conflict adapts this feedback loop to discover disagreements between jailbreak judges:
 
 <p align="center">
   <img src="assets/figures/method.png" width="800" alt="An agent edits candidate data, evaluates it with two judges, and uses their feedback to search for conflicts">
