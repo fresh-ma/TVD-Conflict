@@ -84,7 +84,7 @@ Neither collection supplies independently verified human ground-truth labels in 
 
 The release includes full archived text for research use. It does not attach unverified
 failure-mode or human-correctness annotations. The figure in the project README summarizes the
-paper's separate taxonomy analysis. Its hatched internal-inconsistency bars preserve
+paper's separate taxonomy analysis. Its internal-inconsistency counts preserve
 historical sub-label-screen candidates; confirming this attribute requires comparing
 a judge's explicit rationale with its emitted decision under the stated rubric.
 

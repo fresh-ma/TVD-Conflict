@@ -96,7 +96,7 @@ failure-mode-guided template, and optional few-shot demonstrations from the rele
 <p align="center">
   <img src="assets/figures/failure_modes.png" width="1000" alt="Failure-mode prevalence in real-attack and TVD-Conflict cases">
 </p>
-<p align="center"><em>Failure-mode prevalence by collection route. The TVD panel describes the 1,681-case analysis subset. Hatched bars retain historical internal-inconsistency screening candidates pending rationale-based verification.</em></p>
+<p align="center"><em>Failure-mode prevalence by collection route. The TVD panel describes the 1,681-case analysis subset. Internal-inconsistency counts retain historical screening candidates pending rationale-based verification.</em></p>
 
 ## Quick Start
 
