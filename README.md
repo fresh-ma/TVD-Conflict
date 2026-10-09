@@ -88,7 +88,8 @@ failure-mode-guided template, and optional few-shot demonstrations from the rele
    cases across different-backbone and repeated same-backbone evaluations.
 3. **Disagreement has recurring mechanisms.** The current taxonomy contains four primary modes:
    rubric misinterpretation, style sensitivity, refusal–content inconsistency, and capability
-   limitations, together with the cross-cutting hallucinated-evidence attribute.
+   limitations, together with two cross-cutting attributes: internally inconsistent verdicts
+   and hallucinated evidence.
 
 <p align="center">
   <img src="assets/figures/failure_modes.png" width="1000" alt="Failure-mode prevalence in real-attack and TVD-Conflict cases">
