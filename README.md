@@ -79,19 +79,11 @@ For scoring runs, it retains the historical TVD rule: the absolute difference be
 scores must be **strictly greater than 0.5** by default. It supports a base task template, a
 failure-mode-guided template, and optional few-shot demonstrations from the released data.
 
-## Main Findings
+## Contributions
 
-1. **Evaluator choice changes measured attack success.** Across the complete real-attack audit,
-   judges disagree on 24.2% of valid binary evaluations and 15.5% of valid scoring evaluations
-   under the paper's score-gap metric.
-2. **Directed search finds conflicts across judge configurations.** TVD-Conflict archives 1,702
-   cases across different-backbone and repeated same-backbone evaluations.
-3. **Disagreement has recurring mechanisms.** The current taxonomy contains four primary modes:
-   rubric misinterpretation, style sensitivity, refusal–content inconsistency, and capability
-   limitations, together with two cross-cutting attributes: internally inconsistent verdicts
-   and hallucinated evidence.
-   An internally inconsistent verdict occurs when a judge's explicit reasoning contradicts
-   its emitted decision under the stated rubric; it is not inferred from sub-label combinations.
+1. We use disagreement under a shared evaluation criterion as an executable signal for discovering jailbreak-judge failure cases.
+2. We introduce TVD-Conflict, an agentic framework that iteratively refines realistic interactions using judge feedback without requiring human labels during collection.
+3. We collect 1,702 TVD-Conflict pairs and analyze them alongside 717 attack-derived conflicts to identify six recurring judge failure modes.
 
 <p align="center">
   <img src="assets/figures/failure_modes.png" width="1000" alt="Failure-mode prevalence in real-attack and TVD-Conflict cases">
