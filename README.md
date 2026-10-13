@@ -1,5 +1,9 @@
 <h1 align="center">TVD-Conflict: Disagreement-Guided Discovery of Jailbreak Judge Vulnerabilities</h1>
 
+<p align="center">
+  <b>Zhouyuan Ma, Pixiao Lan, Yutao Wu</b>
+</p>
+
 <p align="center"><b>NeurIPS 2026 · TAE Workshop</b></p>
 
 <p align="center">
@@ -215,6 +219,7 @@ If you use the method or conflict datasets, please cite the
 
 ```bibtex
 @misc{tvdconflict2026,
+  author       = {Ma, Zhouyuan and Lan, Pixiao and Wu, Yutao},
   title        = {TVD-Conflict: Disagreement-Guided Discovery of Jailbreak Judge Vulnerabilities},
   year         = {2026},
   howpublished = {NeurIPS 2026 TAE Workshop},
