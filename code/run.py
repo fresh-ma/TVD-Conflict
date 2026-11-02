@@ -15,6 +15,8 @@ import subprocess
 import sys
 import uuid
 
+from redact_secrets import redact_secrets
+
 HERE = Path(__file__).resolve().parent
 
 
@@ -194,7 +196,13 @@ def main():
             if model:
                 command.extend(["--model", model])
             command.append((workspace / "TASK.md").read_text())
-        result = subprocess.run(command, cwd=workspace, env=env)
+        with subprocess.Popen(
+            command, cwd=workspace, env=env, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
+        ) as result:
+            for line in result.stdout:
+                print(redact_secrets(line), end="", flush=True)
+            result.wait()
         remaining = len(json.loads((workspace / "attempt.json").read_text())["samples"])
         retained = len(json.loads((workspace / "successful.json").read_text())["samples"])
         print(f"Archived conflicts: {retained}; remaining targets: {remaining}")
